@@ -4,3 +4,4 @@ ipykernel
 unstructured
 pdfminer.six
 chromadb
+tiktoken
