@@ -1,7 +1,14 @@
-langchain~=0.0.144
-openai~=0.27.4
+langchain
+openai
 ipykernel
 unstructured
 pdfminer.six
 chromadb
 tiktoken
+FastAPI ~= 0.96.0
+python-multipart ~= 0.0.6
+sqlmodel[postgresql] ~= 0.0.8
+pytest
+boto3
+pgvector
+psycopg2-binary
