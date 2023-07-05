@@ -1,0 +1,24 @@
+version: '3.4'
+
+services:
+  articlechat:
+    image: articlechat
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 8000:8000
+
+  database:
+    image: ankane/pgvector:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    
+volumes:
+  data:
