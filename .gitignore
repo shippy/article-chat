@@ -161,3 +161,6 @@ cython_debug/
 
 data/*
 db/*
+infrastructure/.terraform
+infrastructure/*.tfstate
+infrastructure/*.tfstate.backup
