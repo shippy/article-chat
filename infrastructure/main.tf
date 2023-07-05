@@ -5,6 +5,20 @@ terraform {
       version = "~> 4.0"
     }
   }
+  
+  # cloud {
+  #   organization = "simonpodhajsky"
+
+  #   workspaces {
+  #     name = "article-chat"
+  #   }
+  # }
+
+  # backend "s3" {
+  #   bucket = "chatarticle-terraform-state"
+  #   key    = "terraform.tfstate"
+  #   region = "eu-central-1"
+  # }
 }
 
 # Configure the AWS Provider
@@ -22,8 +36,14 @@ provider "aws" {
   }
 }
 
-# Create a backend S3 bucket to store Terraform state
-resource "aws_s3_bucket" "terraform-state" {
-  bucket = "terraform-state"
-}
+# # Create a backend S3 bucket to store Terraform state
+# resource "aws_s3_bucket" "terraform-state" {
+#   bucket = "chatarticle-terraform-state"
+# }
 
+# resource "aws_s3_bucket_versioning" "terraform-state-versioning" {
+#   bucket = "chatarticle-terraform-state"
+#   versioning_configuration {
+#     status = "Enabled"
+#   }
+# }
