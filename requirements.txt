@@ -6,6 +6,7 @@ pdfminer.six
 chromadb
 tiktoken
 FastAPI ~= 0.96.0
+fastapi-cognito ~= 2.3.0
 python-multipart ~= 0.0.6
 sqlmodel[postgresql] ~= 0.0.8
 pytest
