@@ -13,3 +13,4 @@ pytest
 boto3
 pgvector
 psycopg2-binary
+gunicorn
