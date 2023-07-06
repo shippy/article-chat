@@ -8,6 +8,11 @@ variable "bucket_name" {
     type = string
 }
 
+# variable "pgvector_password" {
+#     type = string
+#     sensitive = true
+# }
+
 # variable "namecheap_api_key" {
 #     description = "Namecheap APIKey"
 #     type = string

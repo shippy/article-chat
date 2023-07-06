@@ -38,3 +38,9 @@ resource "aws_subnet" "chat_subnet" {
   availability_zone = "eu-central-1a"
   cidr_block        = "10.0.3.0/24"
 }
+
+resource "aws_subnet" "chat_subnet2" {
+  vpc_id            = aws_vpc.chat_vpc.id
+  availability_zone = "eu-central-1b"
+  cidr_block        = "10.0.4.0/24"
+}
