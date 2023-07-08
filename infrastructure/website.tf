@@ -1,10 +1,5 @@
 resource "aws_route53_zone" "prod" {
     name = var.domain_name
-    vpc {
-      vpc_id     = aws_vpc.chat_vpc.id
-      vpc_region = "eu-central-1"  # Replace with your desired region
-    }
-
 }
 
 resource "aws_route53_record" "chat_r53_record" {
@@ -19,14 +14,38 @@ resource "aws_route53_record" "chat_r53_record" {
   }
 }
 
-# resource "aws_route53_record" "chat_r53_nameservers" {
-#   zone_id = aws_route53_zone.prod.zone_id
-#   name    = var.domain_name
-#   type    = "NS"
-#   ttl     = "172800"  # 2 days
+resource "aws_acm_certificate" "domain_certificate_request" {
+  domain_name               = var.domain_name
+  subject_alternative_names = [var.api_domain_name]
+  validation_method         = "DNS"
 
-#   records = aws_route53_record.chat_r53_record.name_servers
-# }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# NOTE: Keeping this validation record because it is exactly equivalent to the one
+# required by the us-east-1 certificate
+resource "aws_route53_record" "validation_record" {
+  for_each = {
+    for dvo in aws_acm_certificate.domain_certificate_request.domain_validation_options: dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  zone_id = aws_route53_zone.prod.zone_id
+  name    = each.value.name
+  type    = each.value.type
+  records = [each.value.record]
+  ttl     = 36000
+}
+
+resource "aws_acm_certificate_validation" "certificate_validation" {
+  certificate_arn         = aws_acm_certificate.domain_certificate_request.arn
+  validation_record_fqdns = [for record in aws_route53_record.validation_record: record.fqdn]
+}
 
 
 resource "aws_s3_bucket" "frontend" {
@@ -85,9 +104,12 @@ resource "aws_cloudfront_distribution" "chat_s3_distribution" {
     }
   }
 
-  # aliases = [var.domain_name]  # Requires additional steps to prepare certificate (need ACM)
+  aliases = [var.domain_name]
   viewer_certificate {
-    cloudfront_default_certificate = true
+    # cloudfront_default_certificate = false
+    # acm_certificate_arn            = aws_acm_certificate_validation.certificate_validation.certificate_arn
+    acm_certificate_arn            = var.us-east-1-cert
+    ssl_support_method             = "sni-only"
   }
 }
 
