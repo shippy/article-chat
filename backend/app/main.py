@@ -20,7 +20,6 @@ from .core.auth import cognito_eu
 from .models.document import Document, VectorEmbedding
 from .models.user import User
 from .models.chat import Chat, ChatMessage
-import boto3
 import os
 
 app = FastAPI()

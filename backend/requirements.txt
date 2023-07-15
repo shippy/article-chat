@@ -3,17 +3,15 @@ openai
 ipykernel
 unstructured[pdf2image]
 pdfminer.six
-chromadb
 tiktoken
-FastAPI ~= 0.96.0
+FastAPI[all] ~= 0.96.0
 fastapi-cognito ~= 2.3.0
 python-multipart ~= 0.0.6
 sqlmodel[postgresql] ~= 0.0.8
 pytest
-boto3
 pgvector
 psycopg2-binary
 gunicorn
-# python-jose[cryptography]
+python-jose[cryptography]
 httpx
 pyjwt[crypto]
