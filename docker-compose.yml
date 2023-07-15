@@ -4,8 +4,14 @@ services:
   articlechat:
     image: articlechat
     build:
-      context: .
+      context: ./backend
       dockerfile: ./Dockerfile
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_SCHEMA: ${POSTGRES_SCHEMA:-public}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
     ports:
       - 8000:8000
 

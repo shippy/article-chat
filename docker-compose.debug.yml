@@ -4,7 +4,7 @@ services:
   articlechat:
     image: articlechat
     build:
-      context: .
+      context: ./backend
       dockerfile: ./Dockerfile
     # command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
     command: ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
@@ -19,7 +19,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
     # FIXME: 
     volumes:
-      - ./app:/app/app
+      - ./backend:/app
 
   database:
     image: ankane/pgvector:latest
