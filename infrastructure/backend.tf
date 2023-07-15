@@ -1,24 +1,85 @@
-# resource "aws_db_subnet_group" "pgvector_subnet" {
-#     name = "main"
-#     subnet_ids = [aws_subnet.chat_subnet.id, aws_subnet.chat_subnet2.id]
-# }
+# Following tutorial at https://radix.ai/blog/2020/12/swiftly-writing-and-deploying-apis-to-stay-agile/
+resource "aws_ecr_repository" "main" {
+  name = "article-chat"
+}
 
-# # resource "aws_kms_key" "pgvector" {
-# #   description = "ArticleChat RDS KMS Key"
-# # }
+output "repository_url" {
+  value = aws_ecr_repository.main.repository_url
+}
 
-# resource "aws_db_instance" "pgvector" {
-#     allocated_storage = 10
-#     db_name = "article_chat"
-#     db_subnet_group_name = aws_db_subnet_group.pgvector_subnet.name
-#     engine = "postgres"
-#     engine_version = 15
-#     instance_class = "db.t3.micro"
-#     username = "pgvector"
-#     # manage_master_user_password = true
-#     # master_user_secret_kms_key_id = aws_kms_key.pgvector.key_id
-#     password = var.pgvector_password
-#     # publicly_accessible = true
-#     port = 5432
-#     vpc_security_group_ids = [aws_security_group.chat_sg.id]
-# }
+resource "aws_ecs_cluster" "main" {
+  name = "article-chat"
+}
+
+
+module "alb" {
+  source  = "terraform-aws-modules/alb/aws"
+  version = "~> 5.0"
+
+  name            = "article-chat-alb"
+  vpc_id          = aws_vpc.chat_vpc.id
+  subnets         = [aws_subnet.chat_public_subnet_1.id, aws_subnet.chat_public_subnet_2.id]
+  security_groups = [aws_security_group.chat_sg.id]
+
+  target_groups = [
+    {
+      name         = "article-chat-tg"
+      port         = 80
+      protocol     = "HTTP"
+      target_type  = "ip"
+      vpc_id       = aws_vpc.chat_vpc.id
+      health_check = {
+        path    = "/docs"
+        port    = "80"
+        matcher = "200-399"
+      }
+    }
+  ]
+
+  http_tcp_listeners = [
+    {
+      port               = 80
+      protocol           = "HTTP"
+      target_group_index = 0
+    }
+  ]
+}
+
+module "container_definition" {
+  source = "git::https://github.com/cloudposse/terraform-aws-ecs-container-definition.git?ref=tags/0.60.0"
+
+  container_name  = "article-chat-container"
+  container_image = aws_ecr_repository.main.repository_url
+  port_mappings   = [
+    {
+      containerPort = 80
+      hostPort      = 80
+      protocol      = "tcp"
+    }
+  ]
+}
+
+module "ecs_alb_service_task" {
+  source = "git::https://github.com/cloudposse/terraform-aws-ecs-alb-service-task.git?ref=tags/0.70.0"
+
+  namespace                 = "rdx"
+  stage                     = "prod"
+  name                      = "article-chat"
+  container_definition_json = module.container_definition.json_map_encoded_list
+  ecs_cluster_arn           = aws_ecs_cluster.main.arn
+  launch_type               = "FARGATE"
+  vpc_id                    = aws_vpc.chat_vpc.id
+  security_group_ids        = [aws_security_group.chat_sg.id]
+  subnet_ids                = [aws_subnet.chat_public_subnet_1.id, aws_subnet.chat_public_subnet_2.id]
+
+  health_check_grace_period_seconds  = 60
+  ignore_changes_task_definition     = false
+
+  ecs_load_balancers = [
+    {
+      target_group_arn = module.alb.target_group_arns[0]
+      elb_name         = ""
+      container_name   = "article-chat-container"
+      container_port   = 80
+  }]
+}
