@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   articlechat:
-    image: articlechat
+    image: article-chat
     build:
       context: ./backend
       dockerfile: ./Dockerfile
@@ -12,6 +12,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-postgres}
       POSTGRES_SCHEMA: ${POSTGRES_SCHEMA:-public}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      COGNITO_REGION: ${COGNITO_REGION}
+      COGNITO_POOL_ID: ${COGNITO_POOL_ID}
     ports:
       - 8000:8000
 
