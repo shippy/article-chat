@@ -16,7 +16,7 @@ resource "aws_route53_record" "chat_r53_record" {
 
 resource "aws_acm_certificate" "domain_certificate_request" {
   domain_name               = var.domain_name
-  subject_alternative_names = [var.api_domain_name]
+  subject_alternative_names = [ var.api_domain_name, var.auth_domain_name, "www.${var.domain_name}" ]
   validation_method         = "DNS"
 
   lifecycle {
@@ -106,8 +106,7 @@ resource "aws_cloudfront_distribution" "chat_s3_distribution" {
 
   aliases = [var.domain_name]
   viewer_certificate {
-    # cloudfront_default_certificate = false
-    # acm_certificate_arn            = aws_acm_certificate_validation.certificate_validation.certificate_arn
+    cloudfront_default_certificate = false
     acm_certificate_arn            = var.us-east-1-cert
     ssl_support_method             = "sni-only"
   }
