@@ -18,7 +18,7 @@ module "alb" {
 
   name            = "article-chat-alb"
   vpc_id          = aws_vpc.chat_vpc.id
-  subnets         = [aws_subnet.chat_subnet.id, aws_subnet.chat_subnet2.id]
+  subnets         = [aws_subnet.chat_public_subnet_1.id, aws_subnet.chat_public_subnet_2.id]
   security_groups = [aws_security_group.chat_sg.id]
 
   target_groups = [
@@ -70,7 +70,7 @@ module "ecs_alb_service_task" {
   launch_type               = "FARGATE"
   vpc_id                    = aws_vpc.chat_vpc.id
   security_group_ids        = [aws_security_group.chat_sg.id]
-  subnet_ids                = [aws_subnet.chat_subnet.id, aws_subnet.chat_subnet2.id]
+  subnet_ids                = [aws_subnet.chat_public_subnet_1.id, aws_subnet.chat_public_subnet_2.id]
 
   health_check_grace_period_seconds  = 60
   ignore_changes_task_definition     = false
@@ -83,3 +83,16 @@ module "ecs_alb_service_task" {
       container_port   = 80
   }]
 }
+
+# resource "aws_route53_record" "api-backend-A" {
+#   zone_id = aws_route53_zone.prod.zone_id
+#   name    = var.api_domain_name
+#   type    = "A"
+
+#   alias {
+#     # FIXME: Where do I get this?
+#     name                   = module.alb.aws_lb.this.instances[0].dns_name
+#     zone_id                = aws_route53_zone.prod.zone_id
+#     evaluate_target_health = true
+#   }
+# }
