@@ -80,3 +80,55 @@ resource "aws_subnet" "chat_public_subnet_2" {
     Name = "chat-public-subnet-2"
   }
 }
+
+# Route tables
+# Public Route Table
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.chat_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.chat_igw.id
+  }
+
+  tags = {
+    Name = "chat-public-rt"
+  }
+}
+
+# Associate the public route table with the public subnets
+resource "aws_route_table_association" "public_1" {
+  subnet_id      = aws_subnet.chat_public_subnet_1.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.chat_public_subnet_2.id
+  route_table_id = aws_route_table.public.id
+}
+
+# Private Route Table
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.chat_vpc.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+
+  tags = {
+    Name = "chat-private-rt"
+  }
+}
+
+# Associate the private route table with the private subnets
+resource "aws_route_table_association" "private_1" {
+  subnet_id      = aws_subnet.chat_subnet.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "private_2" {
+  subnet_id      = aws_subnet.chat_subnet2.id
+  route_table_id = aws_route_table.private.id
+}
+
