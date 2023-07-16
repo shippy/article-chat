@@ -1,3 +1,7 @@
+# Origins
+# - Radix tutorial: https://radix.ai/blog/2020/12/swiftly-writing-and-deploying-apis-to-stay-agile/
+# - https://faun.pub/terraform-with-aws-create-aws-vpc-with-private-public-subnet-with-nat-gateway-security-group-ebbe643b7a66
+
 # Create the VPC for the use case
 resource "aws_vpc" "chat_vpc" {
   cidr_block = "10.0.0.0/16"

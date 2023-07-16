@@ -4,7 +4,7 @@ services:
   articlechat:
     image: article-chat
     build:
-      context: ./backend
+      context: ./backend_experiment
       dockerfile: ./Dockerfile
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -14,8 +14,15 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       COGNITO_REGION: ${COGNITO_REGION}
       COGNITO_POOL_ID: ${COGNITO_POOL_ID}
+      COGNITO_APP_CLIENT_ID: ${COGNITO_APP_CLIENT_ID}
+      COGNITO_CLIENT_SECRET: ${COGNITO_CLIENT_SECRET}
+      COGNITO_DOMAIN: ${COGNITO_DOMAIN}
+      COGNITO_REDIRECT_URL: ${COGNITO_REDIRECT_URL}
+      COGNITO_TOKEN_URL: ${COGNITO_TOKEN_URL}
+      DEPLOYMENT_DOMAIN: ${DEPLOYMENT_DOMAIN}
+
     ports:
-      - 8000:8000
+      - 80:80
 
   database:
     image: ankane/pgvector:latest
