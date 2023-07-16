@@ -33,7 +33,12 @@ resource "aws_cognito_user_pool_client" "client" {
   supported_identity_providers = ["COGNITO"]
 
 
-  callback_urls = ["https://${var.api_domain_name}/callback", "https://${var.api_domain_name}/redirect"]
+  callback_urls = [
+    "https://${var.api_domain_name}/callback",
+    "https://${var.api_domain_name}/redirect",
+    "http://localhost/callback",
+    "http://localhost/redirect"
+  ]
   default_redirect_uri  = "https://${var.api_domain_name}/redirect"
   logout_urls = ["https://${var.api_domain_name}/logout"]
   
