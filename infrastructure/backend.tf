@@ -18,8 +18,8 @@ module "alb" {
 
   name            = "article-chat-alb"
   vpc_id          = aws_vpc.chat_vpc.id
-  # subnets         = [aws_subnet.chat_public_subnet_1.id, aws_subnet.chat_public_subnet_2.id]
-  subnets         = [aws_subnet.chat_subnet.id, aws_subnet.chat_subnet2.id]
+  subnets         = [aws_subnet.chat_public_subnet_1.id, aws_subnet.chat_public_subnet_2.id]
+  # subnets         = [aws_subnet.chat_subnet.id, aws_subnet.chat_subnet2.id]
   security_groups = [aws_security_group.chat_sg.id]
 
   target_groups = [
@@ -37,13 +37,35 @@ module "alb" {
     }
   ]
 
+  # http_tcp_listeners = [
+  #   {
+  #     port               = 80
+  #     protocol           = "HTTP"
+  #     target_group_index = 0
+  #   }
+  # ]
   http_tcp_listeners = [
     {
-      port               = 80
-      protocol           = "HTTP"
+      port        = 80
+      protocol    = "HTTP"
+      action_type = "redirect"
+      redirect = {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+  ]
+
+  https_listeners = [
+    {
+      port               = 443
+      protocol           = "HTTPS"
+      certificate_arn    = aws_acm_certificate.domain_certificate_request.arn
       target_group_index = 0
     }
   ]
+
 }
 
 module "container_definition" {
@@ -86,15 +108,15 @@ module "ecs_alb_service_task" {
   }]
 }
 
-# resource "aws_route53_record" "api-backend-A" {
-#   zone_id = aws_route53_zone.prod.zone_id
-#   name    = var.api_domain_name
-#   type    = "A"
+resource "aws_route53_record" "api-backend-A" {
+  zone_id = aws_route53_zone.prod.zone_id
+  name    = var.api_domain_name
+  type    = "A"
 
-#   alias {
-#     # FIXME: Where do I get this?
-#     name                   = module.alb.aws_lb.this.instances[0].dns_name
-#     zone_id                = aws_route53_zone.prod.zone_id
-#     evaluate_target_health = true
-#   }
-# }
+  alias {
+    name                   = module.alb.this_lb_dns_name
+    zone_id                = module.alb.this_lb_zone_id
+
+    evaluate_target_health = true
+  }
+}
