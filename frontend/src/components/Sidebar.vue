@@ -10,20 +10,28 @@
     </div>
 </template>
   
-<script>
+<script lang="ts">
+import { computed } from 'vue'
 import apiService from '../services/api.service'
+import { type Document } from '../types'
+import { useDocumentsStore } from '@/stores/documents'
 
 export default {
-    data() {
-        return {
-            documents: []
-        }
+    setup() {
+        const store = useDocumentsStore();
+        const documents = computed<Document[]>(() => store.$state.documents);
+
+        // Your methods here
+
+        return { documents };
     },
+
     async created() {
         this.documents = await apiService.getDocuments();
     },
     methods: {
-        startChat(docId) {
+        startChat(docId: Number) {
+            console.log('Start chat for document ' + docId)
             // Logic to start a chat
         }
     }
