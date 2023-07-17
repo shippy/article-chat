@@ -44,7 +44,7 @@ def verify_jwt(token: str, jwks: JWKS) -> bool:
     if not hmac_key:
         raise ValueError("No public key found!")
 
-    hmac_key = jwk.construct(get_hmac_key(token, jwks))
+    hmac_key = jwk.construct(hmac_key)
 
     message, encoded_signature = token.rsplit(".", 1)
     decoded_signature = base64url_decode(encoded_signature.encode())
