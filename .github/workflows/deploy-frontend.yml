@@ -1,3 +1,5 @@
+# Inspired by https://betterprogramming.pub/deploy-a-cost-effective-vue-js-web-app-on-aws-with-terraform-and-github-actions-f84fb8df6d17
+
 name: Deploy to S3 and Cloudfront
 
 on:
