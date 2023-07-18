@@ -139,7 +139,8 @@ async def get_token_from_cookie(request: Request):
 
 
 async def get_current_user(
-    session: Session = Depends(get_session), token=Depends(verify_and_decode_access_token_from_request)
+    session: Session = Depends(get_session),
+    token=Depends(verify_and_decode_access_token_from_request),
 ) -> User:
     user = session.exec(
         select(User).where(User.cognito_id == token.get("username"))

@@ -60,6 +60,14 @@ data "aws_iam_policy_document" "gh_action_policy_doc" {
       "${aws_ecr_repository.main.arn}"
     ]
   }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ecr:GetAuthorizationToken"
+    ]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "gh_action_policy" {
