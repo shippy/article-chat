@@ -19,9 +19,7 @@ from app.core.settings import settings
 from app.core.database import get_session, engine
 from app.core.auth import (
     cognito_eu,
-    get_token_from_cookie,
-    verify_and_decode_token,
-    verify_and_decode_access_token_from_request,
+    get_current_user,
 )
 from app.models.document import Document, VectorEmbedding
 from app.models.user import User
@@ -49,7 +47,9 @@ CHUNK_SIZE = 1000
 
 
 async def extract_embeddings_from_file(
-    uploaded_file: UploadFile, session: Session
+    uploaded_file: UploadFile,
+    session: Session,
+    current_user: User,
 ) -> int:
     try:
         # Get the contents of the uploaded file
@@ -68,8 +68,6 @@ async def extract_embeddings_from_file(
     splitter = CharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=100)
     docs = splitter.split_documents(loaded_document)
 
-    # current_user = select(User).where(User.cognito_id == token.cognito_id).first()
-    current_user = session.exec(select(User).where(User.id == 1)).first()
     db_doc = Document(title=uploaded_file.filename, user_id=current_user.id)
     session.add(db_doc)
     session.commit()
@@ -99,14 +97,16 @@ async def root() -> Mapping[str, str]:
 async def upload_and_process_file(
     uploaded_file: UploadFile = File(...),
     # token: CognitoToken = Depends(cognito_eu.auth_required),
-    session=Depends(get_session),
-    token: CognitoToken = Depends(verify_and_decode_access_token_from_request),
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ) -> int:
     try:
         # contents = uploaded_file.file.read()
         # uploaded_file.file.seek(0)
         # await upload_file(uploaded_file)
-        document_id = await extract_embeddings_from_file(uploaded_file, session)
+        document_id = await extract_embeddings_from_file(
+            uploaded_file, session, current_user=current_user
+        )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading file to S3: {e}")
@@ -120,15 +120,8 @@ async def upload_and_process_file(
 @app.get("/documents")
 async def list_documents(
     session: Session = Depends(get_session),
-    token: CognitoToken = Depends(verify_and_decode_access_token_from_request),
+    current_user: User = Depends(get_current_user),
 ) -> Sequence[Document]:
-    print("Token", token)
-    current_user = session.exec(
-        select(User).where(User.cognito_id == token.get("username"))
-    ).first()
-    if not current_user:
-        raise HTTPException(status_code=401, detail="User not found")
-    # current_user = session.exec(select(User).where(User.id == 1)).first()
     query = select(Document).where(Document.user_id == current_user.id)
     documents = list(session.exec(query))
     return documents
@@ -138,8 +131,9 @@ async def list_documents(
 async def create_new_chat(
     document_id: int,
     session: Session = Depends(get_session),
-    token: CognitoToken = Depends(verify_and_decode_access_token_from_request),
+    current_user: User = Depends(get_current_user),
 ) -> int:
+    # TODO: Check that the document belongs to the user
     new_chat = Chat(document_id=document_id)
     session.add(new_chat)
     session.commit()
@@ -152,13 +146,11 @@ async def create_new_chat(
 async def retrieve_chat(
     chat_id: int,
     session: Session = Depends(get_session),
-    token: CognitoToken = Depends(verify_and_decode_access_token_from_request),
+    current_user: User = Depends(get_current_user),
+    
 ) -> Sequence[ChatMessage]:
-    user = session.exec(
-        select(User).where(User.cognito_id == token.get("username"))
-    ).first()
     query = select(ChatMessage).where(
-        ChatMessage.chat_id == chat_id, ChatMessage.user_id == user.id
+        ChatMessage.chat_id == chat_id, ChatMessage.user_id == current_user.id
     )
     chat_messages = session.exec(query)
     return list(chat_messages)
@@ -169,7 +161,7 @@ async def send_message(
     chat_id: int,
     message: str,
     session: Session = Depends(get_session),
-    token: CognitoToken = Depends(verify_and_decode_access_token_from_request),
+    current_user: User = Depends(get_current_user),    
 ):
     return
 
