@@ -1,4 +1,5 @@
 <template>
+    <Login />
     <div>
         <h2>Uploaded Documents</h2>
         <ul>
