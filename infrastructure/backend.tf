@@ -80,6 +80,59 @@ module "container_definition" {
       protocol      = "tcp"
     }
   ]
+  environment = [
+    {
+      name  = "DEPLOYMENT_DOMAIN"
+      value = var.api_domain_name
+    },
+    {
+      name  = "COGNITO_REGION"
+      value = var.aws_region
+    },
+    {
+      name  = "COGNITO_POOL_ID"
+      value = aws_cognito_user_pool.main.id
+    },
+    {
+      name  = "COGNITO_APP_CLIENT_ID"
+      value = aws_cognito_user_pool_client.client.id
+    },
+    {
+      name  = "COGNITO_REDIRECT_URL"
+      value = "https://${var.api_domain_name}/callback"
+    },
+    {
+      name  = "COGNITO_DOMAIN",
+      value = var.auth_domain_name
+    },
+    {
+      name  = "POSTGRES_URL",
+      value = aws_db_instance.pgvector.address
+    },
+    {
+      name  = "POSTGRES_PORT",
+      value = aws_db_instance.pgvector.port
+    },
+    {
+      name = "POSTGRES_USER",
+      value = aws_db_instance.pgvector.username
+    },
+    {
+      name  = "POSTGRES_DB",
+      value = aws_db_instance.pgvector.db_name
+    }
+    # Username and password passed in as a secret below in PGVECTOR_CREDENTIALS
+  ]
+  secrets = [
+    {
+      name      = "COGNITO_CLIENT_SECRET"
+      valueFrom = aws_secretsmanager_secret.cognito_client_secret.arn
+    },
+    {
+      name      = "PGVECTOR_CREDENTIALS"
+      valueFrom = aws_db_instance.pgvector.master_user_secret[0].secret_arn
+    }
+  ]
 }
 
 module "ecs_alb_service_task" {

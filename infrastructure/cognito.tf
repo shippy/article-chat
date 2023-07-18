@@ -79,3 +79,13 @@ output "user_pool_secret" {
   sensitive = true
 }
 
+# Save the client_secret into a Secret Manager secret, to be used
+# by the ECS task definition (wherein the API converts the codes to tokens)
+resource "aws_secretsmanager_secret" "cognito_client_secret" {
+  name = "articlechat_cognito_client_secret"
+}
+
+resource "aws_secretsmanager_secret_version" "cognito_client_secret" {
+  secret_id     = aws_secretsmanager_secret.cognito_client_secret.id
+  secret_string = aws_cognito_user_pool_client.client.client_secret
+}

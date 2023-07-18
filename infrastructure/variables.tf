@@ -1,3 +1,8 @@
+variable "aws_region" {
+    default = "eu-central-1"
+    type = string
+}
+
 variable "domain_name" {
     default = "journalarticle.chat"
     type = string
