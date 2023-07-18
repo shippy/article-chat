@@ -58,7 +58,7 @@ async def process_cognito_code(code: str, response: Response):
     }
     async with httpx.AsyncClient() as client:
         cognito_response = await client.post(
-            os.environ.get("COGNITO_TOKEN_URL"), data=data, headers=headers
+            f"{os.environ.get('COGNITO_DOMAIN')}/oauth2/token", data=data, headers=headers
         )
         print(cognito_response.json())
     if cognito_response.status_code != 200:

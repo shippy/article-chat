@@ -4,7 +4,7 @@ services:
   articlechat:
     image: article-chat
     build:
-      context: ./backend_experiment
+      context: ./backend
       dockerfile: ./Dockerfile
     environment:
       # A JSON with 'username' and 'password' keys
@@ -20,7 +20,6 @@ services:
       COGNITO_CLIENT_SECRET: ${COGNITO_CLIENT_SECRET}
       COGNITO_DOMAIN: ${COGNITO_DOMAIN}
       COGNITO_REDIRECT_URL: ${COGNITO_REDIRECT_URL}
-      COGNITO_TOKEN_URL: ${COGNITO_TOKEN_URL}
       DEPLOYMENT_DOMAIN: ${DEPLOYMENT_DOMAIN}
 
     ports:
