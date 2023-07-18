@@ -30,7 +30,7 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: chat-article
+        ECR_REPOSITORY: article-chat
         IMAGE_TAG: latest
       run: |
         cd backend/

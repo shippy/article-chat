@@ -147,7 +147,6 @@ async def retrieve_chat(
     chat_id: int,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
-    
 ) -> Sequence[ChatMessage]:
     query = select(ChatMessage).where(
         ChatMessage.chat_id == chat_id, ChatMessage.user_id == current_user.id
@@ -161,7 +160,7 @@ async def send_message(
     chat_id: int,
     message: str,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),    
+    current_user: User = Depends(get_current_user),
 ):
     return
 
