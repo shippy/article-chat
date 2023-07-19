@@ -167,4 +167,7 @@ async def send_message(
 
 @app.on_event("startup")
 def on_startup():
+    from pgvector.psycopg2 import register_vector
+
+    register_vector(engine)
     SQLModel.metadata.create_all(engine)

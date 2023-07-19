@@ -59,6 +59,28 @@ resource "aws_security_group" "chat_sg" {
   }
 }
 
+# Create a security group for the database
+resource "aws_security_group" "db_sg" {
+  name        = "db-sg"
+  description = "Security group for the RDS"
+  vpc_id      = aws_vpc.chat_vpc.id
+
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    security_groups = [aws_security_group.chat_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+
 # Create a subnet for the ELB
 resource "aws_subnet" "chat_subnet" {
   vpc_id            = aws_vpc.chat_vpc.id

@@ -36,7 +36,7 @@ resource "aws_db_instance" "pgvector" {
     password = random_password.pgvector_password.result
     # publicly_accessible = true
     port = 5432
-    vpc_security_group_ids = [aws_security_group.chat_sg.id]
+    vpc_security_group_ids = [aws_security_group.db_sg.id]
 }
 
 output "db_url" {
