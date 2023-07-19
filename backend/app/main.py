@@ -170,4 +170,5 @@ def on_startup():
     from sqlalchemy.sql import text
     with Session(engine) as session:
         session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        print(session.execute(text("SELECT * FROM pg_extension;")))
     SQLModel.metadata.create_all(engine)
