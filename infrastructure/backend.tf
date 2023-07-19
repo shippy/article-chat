@@ -80,6 +80,14 @@ module "container_definition" {
       protocol      = "tcp"
     }
   ]
+  log_configuration = {
+    logDriver = "awslogs"
+    options = {
+      awslogs-group         = aws_cloudwatch_log_group.ecs_logs.name
+      awslogs-region        = var.aws_region
+      awslogs-stream-prefix = "ecs"
+    }
+  }
   environment = [
     {
       name  = "DEPLOYMENT_DOMAIN"
@@ -121,19 +129,54 @@ module "container_definition" {
       name  = "POSTGRES_DB",
       value = aws_db_instance.pgvector.db_name
     }
-    # Username and password passed in as a secret below in PGVECTOR_CREDENTIALS
+    # Password passed in as a secret below in PGVECTOR_CREDENTIALS
   ]
   secrets = [
     {
       name      = "COGNITO_CLIENT_SECRET"
-      valueFrom = aws_secretsmanager_secret.cognito_client_secret.arn
+      valueFrom = aws_ssm_parameter.cognito_client_secret.arn
     },
     {
-      name      = "PGVECTOR_CREDENTIALS"
-      valueFrom = aws_db_instance.pgvector.master_user_secret[0].secret_arn
+      name      = "POSTGRES_PASSWORD"
+      valueFrom = aws_ssm_parameter.pgvector_password.arn
     }
   ]
 }
+
+resource "aws_cloudwatch_log_group" "ecs_logs" {
+  name = "/ecs/article-chat"
+}
+
+# # Permit the above task to actually retrieve the secrets
+# resource "aws_iam_policy" "ecs_secrets" {
+#   name        = "ecs_secrets"
+#   description = "Allows ECS tasks to retrieve secrets from Secrets Manager"
+#   policy      = <<EOF
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Action": [
+#         "secretsmanager:GetSecretValue"
+#       ],
+#       "Resource": [
+#         "${aws_secretsmanager_secret.cognito_client_secret.arn}",
+#         "${aws_db_instance.pgvector.master_user_secret[0].secret_arn}"
+#       ],
+#       "Effect": "Allow"
+#     }
+#   ]
+# }
+# EOF
+# }
+
+# # FIXME: This doesn't work because the module doesn't export the execution role ARN
+# resource "aws_iam_role_policy_attachment" "ecs_secrets_attachment" {
+#   role       = module.ecs_alb_service_task.execution_role_arn  // Replace with actual output variable
+#   policy_arn = aws_iam_policy.ecs_secrets.arn
+# }
+
+# Finally, define an automatic load balancer (ALB) for the task
 
 module "ecs_alb_service_task" {
   source = "git::https://github.com/cloudposse/terraform-aws-ecs-alb-service-task.git?ref=tags/0.70.0"
