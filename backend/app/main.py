@@ -169,5 +169,5 @@ async def send_message(
 def on_startup():
     from sqlalchemy.sql import text
     with Session(engine) as session:
-        session.execute(text("CREATE EXTENSION IF NOT EXISTS pgvector;"))
+        session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
     SQLModel.metadata.create_all(engine)
