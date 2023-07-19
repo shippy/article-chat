@@ -1,6 +1,7 @@
 resource "aws_db_subnet_group" "pgvector_subnet" {
     name = "main"
     subnet_ids = [aws_subnet.chat_subnet.id, aws_subnet.chat_subnet2.id]
+    # subnet_ids = [aws_subnet.chat_subnet.id, aws_subnet.chat_subnet2.id, aws_subnet.chat_public_subnet_1.id, aws_subnet.chat_public_subnet_2.id]
 }
 
 resource "aws_kms_key" "rds" {
@@ -25,7 +26,7 @@ resource "aws_db_instance" "pgvector" {
     db_name = "article_chat"
     db_subnet_group_name = aws_db_subnet_group.pgvector_subnet.name
     engine = "postgres"
-    engine_version = 15
+    engine_version = 15.3
     skip_final_snapshot = true  # allow deletion
     instance_class = "db.t3.micro"
     username = "pgvector"
@@ -37,6 +38,9 @@ resource "aws_db_instance" "pgvector" {
     # publicly_accessible = true
     port = 5432
     vpc_security_group_ids = [aws_security_group.db_sg.id]
+    apply_immediately = true
+    # allow_minor_version_upgrade = true
+    allow_major_version_upgrade = true
 }
 
 output "db_url" {
