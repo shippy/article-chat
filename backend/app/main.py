@@ -166,8 +166,14 @@ async def send_message(
 
 
 @app.get("/info/extensions")
-def see_extensions(session = Depends(get_session)):
+def see_extensions(session=Depends(get_session)):
     return session.execute("SELECT * FROM pg_extension;").all()
+
+
+@app.get("/info/enable_pgvector")
+def enable_pgvector(session=Depends(get_session)):
+    enablement_result = session.execute("CREATE EXTENSION vector;").all()
+    return enablement_result, session.execute("SELECT * FROM pg_extension;").all()
 
 
 @app.on_event("startup")
