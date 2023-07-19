@@ -167,7 +167,7 @@ async def send_message(
 
 @app.on_event("startup")
 def on_startup():
-    from pgvector.psycopg2 import register_vector
-
-    register_vector(engine)
+    from sqlalchemy.sql import text
+    with Session(engine) as session:
+        session.execute(text("CREATE EXTENSION IF NOT EXISTS pgvector;"))
     SQLModel.metadata.create_all(engine)
