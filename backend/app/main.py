@@ -23,7 +23,7 @@ from app.core.auth import (
 )
 from app.models.document import Document, VectorEmbedding
 from app.models.user import User
-from app.models.chat import Chat, ChatMessage
+from app.models.chat import Chat, ChatMessage, ChatOriginator
 from app.api.auth_router import cognito_router
 import os
 
@@ -155,30 +155,81 @@ async def retrieve_chat(
     return list(chat_messages)
 
 
+def get_k_similar_chunks(
+    query_embedding: Sequence[float], session: Session, k: int = 3
+) -> Sequence[str]:
+    query = (
+        select(VectorEmbedding.content)
+        .order_by(VectorEmbedding.embedding.l2_distance(query_embedding))
+        .limit(k)
+    )
+    results = session.exec(query)
+
+    return list(results)
+
+
+TEMPLATE = """
+You are a good chatbot that answers questions regarding published journal papers. You are academic and precise.
+
+The relevant chunks of the paper are:
+
+- {chunks}.
+
+"""
+# Please respond to the following question or request: {query}
+
+
+def make_submittable_prompt(
+    message: str, relevant_docs: Sequence[str], template: str = TEMPLATE
+) -> str:
+    bullet_points = "- " + "\n- ".join(relevant_docs)
+    prompt = template.format(chunks=bullet_points)
+    return prompt
+
+
 @app.post("/chats/{chat_id}/message")
 async def send_message(
     chat_id: int,
     message: str,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
-):
-    return
+) -> ChatMessage:
+    from langchain.chat_models import ChatOpenAI
+    from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
+    new_message = ChatMessage(chat_id=chat_id, user_id=current_user.id, content=message)
 
-@app.get("/info/extensions")
-def see_extensions(session=Depends(get_session)):
-    return session.execute("SELECT * FROM pg_extension;").all()
+    msg_embedding = OpenAIEmbeddings().embed_documents([message])[0]
+    relevant_docs = get_k_similar_chunks(msg_embedding, session)
 
+    gpt_prompt = make_submittable_prompt(message, relevant_docs)
 
-@app.get("/info/enable_pgvector")
-def enable_pgvector(session=Depends(get_session)):
-    enablement_result = session.execute("CREATE EXTENSION vector;")
-    return enablement_result, session.execute("SELECT * FROM pg_extension;").all()
+    chat = ChatOpenAI(model="gpt-4", temperature=0)
+    # TODO: Add some prior chat messages to the prompt?
+    response = chat(
+        [
+            SystemMessage(content=gpt_prompt),
+            HumanMessage(content=message),
+        ]
+    )
+    ai_response = ChatMessage(
+        chat_id=chat_id,
+        user_id=current_user.id,
+        content=response.content,
+        originator=ChatOriginator.ai,
+    )
+    
+    session.add_all([new_message, ai_response])
+    session.commit()
+    session.refresh(ai_response)
+    
+    return ai_response
 
 
 @app.on_event("startup")
 def on_startup():
     from sqlalchemy.sql import text
+
     with Session(engine) as session:
         session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         session.commit()
