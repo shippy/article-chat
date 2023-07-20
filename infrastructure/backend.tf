@@ -107,7 +107,7 @@ module "container_definition" {
     },
     {
       name  = "COGNITO_REDIRECT_URL"
-      value = "https://${var.api_domain_name}/callback"
+      value = "https://${var.api_domain_name}/auth/callback"
     },
     {
       name  = "COGNITO_DOMAIN",
