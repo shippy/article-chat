@@ -7,6 +7,7 @@ from app.models.user import User
 from jose import jwt, jwk
 from jose.utils import base64url_decode
 import os
+import re
 from typing import Any, Dict, List, Literal, Mapping, Optional
 from pydantic import BaseModel
 import requests
@@ -14,6 +15,7 @@ from functools import lru_cache
 from sqlmodel import Session, select
 
 cognito_eu = CognitoAuth(settings=CognitoSettings.from_global_settings(settings))
+CROSS_SITE_SCRIPTING_COOKIE = re.sub("(https?://)?api", "", os.environ.get("DEPLOYMENT_DOMAIN", ""))
 
 # https://gntrm.medium.com/jwt-authentication-with-fastapi-and-aws-cognito-1333f7f2729e
 
@@ -85,13 +87,19 @@ async def verify_and_decode_token(
         if not hmac_key:
             raise ValueError("No matching public key found!")
 
-        decoded_token = jwt.decode(
-            token,
-            hmac_key,
-            algorithms=["RS256"],
-            audience=os.environ.get("COGNITO_APP_CLIENT_ID"),
-            access_token=access_token,
-        )
+        try:
+            decoded_token = jwt.decode(
+                token,
+                hmac_key,
+                algorithms=["RS256"],
+                audience=os.environ.get("COGNITO_APP_CLIENT_ID"),
+                access_token=access_token,
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=401,
+                detail=f"Error decoding token: {e}",
+            )
 
     return decoded_token
 
@@ -100,7 +108,11 @@ async def verify_and_decode_access_token_from_request(
     request: Request,
 ) -> Mapping[str, Any]:
     access_token = request.cookies.get("access_token")
-
+    if not access_token:
+        raise HTTPException(
+            status_code=401,
+            detail="No access token found",
+        )
     return await verify_and_decode_token(access_token)
 
 
@@ -108,7 +120,8 @@ def set_secure_httponly_cookie(
     response: Response,
     key: str,
     value: Any,
-    samesite: Literal["lax", "strict", "none"] = "none",
+    samesite: Literal["lax", "strict", "none"] = "lax",
+    domain: str = CROSS_SITE_SCRIPTING_COOKIE,
 ) -> None:
     response.set_cookie(
         key=key,
@@ -116,6 +129,7 @@ def set_secure_httponly_cookie(
         httponly=True,
         secure=True,
         samesite=samesite,
+        domain=domain,
     )
 
 

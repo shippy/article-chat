@@ -11,7 +11,7 @@ from app.core.auth import (
     verify_jwt,
     get_hmac_key,
     set_secure_httponly_cookie,
-    get_token_from_cookie,
+    CROSS_SITE_SCRIPTING_COOKIE,
 )
 from app.models.user import User
 from app.core.database import get_session
@@ -55,12 +55,15 @@ async def process_cognito_code(
 
     # Extract and decode the ID token to determine the user's identity
     cognito_jwks = get_cognito_jwks()
+    decode_key = get_hmac_key(id_token, cognito_jwks)
+    if not decode_key:
+        raise HTTPException(status_code=401, detail="Irretrievable Cognito public key")
     # decoded_id_token = jwt.decode(id_token, options={"verify_signature": False})
     if not verify_jwt(id_token, cognito_jwks):
         raise HTTPException(status_code=401, detail="Invalid ID token signature")
     decoded_id_token = jwt.decode(
         token=id_token,
-        key=get_hmac_key(id_token, cognito_jwks),
+        key=decode_key,
         algorithms=["RS256"],
         audience=os.environ.get("COGNITO_APP_CLIENT_ID"),
         access_token=access_token,
@@ -77,30 +80,35 @@ async def process_cognito_code(
         session.refresh(user)
 
     # Store all tokens in respective cookies
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        samesite="none",
-        secure=True,
-    )
-    response.set_cookie(
-        key="id_token", value=id_token, httponly=True, samesite="none", secure=True
-    )
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        samesite="none",
-        secure=True,
-    )
-    response.set_cookie(
-        key="expires_at",
-        value=str(expires_in),
-        httponly=True,
-        samesite="none",
-        secure=True,
-    )
+
+    # response.set_cookie(
+    #     key="access_token",
+    #     value=access_token,
+    #     httponly=True,
+    #     samesite="none",
+    #     secure=True,
+    # )
+    set_secure_httponly_cookie(response, "access_token", access_token)
+    # response.set_cookie(
+    #     key="id_token", value=id_token, httponly=True, samesite="none", secure=True
+    # )
+    set_secure_httponly_cookie(response, "id_token", id_token)
+    # response.set_cookie(
+    #     key="refresh_token",
+    #     value=refresh_token,
+    #     httponly=True,
+    #     samesite="none",
+    #     secure=True,
+    # )
+    set_secure_httponly_cookie(response, "refresh_token", refresh_token)
+    # response.set_cookie(
+    #     key="expires_at",
+    #     value=str(expires_in),
+    #     httponly=True,
+    #     samesite="none",
+    #     secure=True,
+    # )
+    set_secure_httponly_cookie(response, "expires_at", str(expires_in))
 
     # Return a success message, or some non-sensitive user info from the ID token.
     return {"message": "Login successful!", "username": user.username}
@@ -110,8 +118,8 @@ async def process_cognito_code(
 async def logout(response: Response):
     domain = os.environ.get("DEPLOYMENT_DOMAIN")
     response = JSONResponse({"message": "Logout successful"})
-    response.delete_cookie(key="access_token", domain=domain)
-    response.delete_cookie(key="id_token", domain=domain)
-    response.delete_cookie(key="refresh_token", domain=domain)
-    response.delete_cookie(key="expires_at", domain=domain)
+    response.delete_cookie(key="access_token", domain=CROSS_SITE_SCRIPTING_COOKIE)
+    response.delete_cookie(key="id_token", domain=CROSS_SITE_SCRIPTING_COOKIE)
+    response.delete_cookie(key="refresh_token", domain=CROSS_SITE_SCRIPTING_COOKIE)
+    response.delete_cookie(key="expires_at", domain=CROSS_SITE_SCRIPTING_COOKIE)
     return response
