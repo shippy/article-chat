@@ -36,7 +36,7 @@ async def process_cognito_code(
     }
     async with httpx.AsyncClient() as client:
         cognito_response = await client.post(
-            f"{os.environ.get('COGNITO_DOMAIN')}/oauth2/token",
+            f"https://{os.environ.get('COGNITO_DOMAIN')}/oauth2/token",
             data=data,
             headers=headers,
         )
