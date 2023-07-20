@@ -172,7 +172,7 @@ def see_extensions(session=Depends(get_session)):
 
 @app.get("/info/enable_pgvector")
 def enable_pgvector(session=Depends(get_session)):
-    enablement_result = session.execute("CREATE EXTENSION vector;").all()
+    enablement_result = session.execute("CREATE EXTENSION vector;")
     return enablement_result, session.execute("SELECT * FROM pg_extension;").all()
 
 
