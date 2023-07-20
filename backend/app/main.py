@@ -178,9 +178,8 @@ def enable_pgvector(session=Depends(get_session)):
 
 @app.on_event("startup")
 def on_startup():
-    pass
-    # from sqlalchemy.sql import text
-    # with Session(engine) as session:
-    #     session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-    #     print(session.execute(text("SELECT * FROM pg_extension;")))
-    # SQLModel.metadata.create_all(engine)
+    from sqlalchemy.sql import text
+    with Session(engine) as session:
+        session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        session.commit()
+    SQLModel.metadata.create_all(engine)
