@@ -139,6 +139,10 @@ module "container_definition" {
     {
       name      = "POSTGRES_PASSWORD"
       valueFrom = aws_ssm_parameter.pgvector_password.arn
+    },
+    {
+      name      = "OPENAI_API_KEY"
+      valueFrom = data.aws_ssm_parameter.openai_key.arn
     }
   ]
 }

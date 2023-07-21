@@ -28,6 +28,10 @@ variable us-east-1-cert {
     type = string
 }
 
+data "aws_ssm_parameter" "openai_key" {
+    name = "/articlechat/openai_key"
+}
+
 # variable "pgvector_password" {
 #     type = string
 #     sensitive = true
