@@ -3,8 +3,8 @@
         <h2>Uploaded Documents</h2>
         <ul>
             <li v-for="document in documents" :key="document.id">
-                {{ document.name }}
-                <button @click="startChat(document.id)">Start Chat</button>
+                <button @click="startChat(document.id)">+</button>
+                {{ document.title }}
             </li>
         </ul>
     </div>
