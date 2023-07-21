@@ -94,6 +94,10 @@ module "container_definition" {
       value = var.api_domain_name
     },
     {
+      name  = "FRONTEND_DOMAIN"
+      value = "https://${var.domain_name}"
+    },
+    {
       name  = "COGNITO_REGION"
       value = var.aws_region
     },

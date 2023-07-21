@@ -126,9 +126,9 @@ def set_secure_httponly_cookie(
     key: str,
     value: Any,
     samesite: Literal["lax", "strict", "none"] = "lax",
-    domain: str = CROSS_SITE_SCRIPTING_COOKIE,
+    domain: Optional[str] = CROSS_SITE_SCRIPTING_COOKIE,
 ) -> None:
-    print(f"Setting {key} cookie to {value} for {domain}")
+    # print(f"Setting {key} cookie to {value} for {domain}")
     response.set_cookie(
         key=key,
         value=value,

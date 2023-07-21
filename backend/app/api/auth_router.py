@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 import os
 import httpx
 import datetime
@@ -80,38 +80,11 @@ async def process_cognito_code(
         session.refresh(user)
 
     # Store all tokens in respective cookies
-
-    # response.set_cookie(
-    #     key="access_token",
-    #     value=access_token,
-    #     httponly=True,
-    #     samesite="none",
-    #     secure=True,
-    # )
     set_secure_httponly_cookie(response, "access_token", access_token)
-    # response.set_cookie(
-    #     key="id_token", value=id_token, httponly=True, samesite="none", secure=True
-    # )
     set_secure_httponly_cookie(response, "id_token", id_token)
-    # response.set_cookie(
-    #     key="refresh_token",
-    #     value=refresh_token,
-    #     httponly=True,
-    #     samesite="none",
-    #     secure=True,
-    # )
     set_secure_httponly_cookie(response, "refresh_token", refresh_token)
-    # response.set_cookie(
-    #     key="expires_at",
-    #     value=str(expires_in),
-    #     httponly=True,
-    #     samesite="none",
-    #     secure=True,
-    # )
-    set_secure_httponly_cookie(response, "expires_at", str(expires_in))
 
-    # Return a success message, or some non-sensitive user info from the ID token.
-    return {"message": "Login successful!", "username": user.username}
+    return RedirectResponse(url=f"{os.environ.get('FRONTEND_DOMAIN')}/")
 
 
 @cognito_router.get("/logout")
@@ -121,5 +94,4 @@ async def logout(response: Response):
     response.delete_cookie(key="access_token", domain=CROSS_SITE_SCRIPTING_COOKIE)
     response.delete_cookie(key="id_token", domain=CROSS_SITE_SCRIPTING_COOKIE)
     response.delete_cookie(key="refresh_token", domain=CROSS_SITE_SCRIPTING_COOKIE)
-    response.delete_cookie(key="expires_at", domain=CROSS_SITE_SCRIPTING_COOKIE)
     return response
