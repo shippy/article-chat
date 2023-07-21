@@ -15,7 +15,12 @@ from functools import lru_cache
 from sqlmodel import Session, select
 
 cognito_eu = CognitoAuth(settings=CognitoSettings.from_global_settings(settings))
-CROSS_SITE_SCRIPTING_COOKIE = re.sub("(https?://)?api", "", os.environ.get("DEPLOYMENT_DOMAIN", ""))
+if "localhost" not in os.environ.get("DEPLOYMENT_DOMAIN", ""):
+    CROSS_SITE_SCRIPTING_COOKIE = re.sub(
+        r"(https?://)?api\.", ".", os.environ.get("DEPLOYMENT_DOMAIN", "")
+    )
+else:
+    CROSS_SITE_SCRIPTING_COOKIE = None
 
 # https://gntrm.medium.com/jwt-authentication-with-fastapi-and-aws-cognito-1333f7f2729e
 
@@ -123,6 +128,7 @@ def set_secure_httponly_cookie(
     samesite: Literal["lax", "strict", "none"] = "lax",
     domain: str = CROSS_SITE_SCRIPTING_COOKIE,
 ) -> None:
+    print(f"Setting {key} cookie to {value} for {domain}")
     response.set_cookie(
         key=key,
         value=value,
