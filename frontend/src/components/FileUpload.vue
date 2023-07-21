@@ -4,7 +4,7 @@
   
 <script lang="ts">
 import apiService from '../services/api.service'
-
+// TODO: Use document store instead?
 export default {
     methods: {
         async uploadFile(event: any) {
