@@ -14,6 +14,7 @@ export default {
   },
   async getDocuments() {
     const response = await axios.get(`${API_URL}/documents`, { withCredentials: true })
+    console.log(response.data)
     return response.data
   },
   async getChat(docId: Number, chatId: Number) {

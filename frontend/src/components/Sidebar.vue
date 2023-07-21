@@ -1,5 +1,4 @@
 <template>
-    <Login />
     <div>
         <h2>Uploaded Documents</h2>
         <ul>
@@ -11,31 +10,20 @@
     </div>
 </template>
   
-<script lang="ts">
-import { computed } from 'vue'
-import apiService from '../services/api.service'
-import { type Document } from '../types'
+<script lang="ts" setup>
+import { computed, onMounted } from 'vue'
 import { useDocumentsStore } from '@/stores/documents'
+import { type Document } from '../types'
 
-export default {
-    setup() {
-        const store = useDocumentsStore();
-        const documents = computed<Document[]>(() => store.$state.documents);
+const store = useDocumentsStore();
+const documents = computed<Document[]>(() => store.documents)
 
-        // Your methods here
+onMounted(async () => {
+  await store.fetchDocuments();
+});
 
-        return { documents };
-    },
-
-    async created() {
-        this.documents = await apiService.getDocuments();
-    },
-    methods: {
-        startChat(docId: Number) {
-            console.log('Start chat for document ' + docId)
-            // Logic to start a chat
-        }
-    }
-}
+const startChat = (docId: number) => {
+  console.log('Start chat for document ' + docId);
+  // Logic to start a chat
+};
 </script>
-  
