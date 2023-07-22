@@ -1,3 +1,7 @@
+# Resources:
+# https://dev.to/aws-builders/build-a-static-website-using-s3-route-53-with-terraform-1ele
+# https://gist.github.com/danihodovic/a51eb0d9d4b29649c2d094f4251827dd
+# https://www.grailbox.com/2020/04/how-to-set-up-a-domain-in-amazon-route-53-with-terraform/
 resource "aws_route53_zone" "prod" {
     name = var.domain_name
 }
