@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL: String = import.meta.env.VITE_APP_BACKEND_URL
+export const API_URL: String = import.meta.env.VITE_APP_BACKEND_URL
 
 export default {
   async uploadDocument(file: File) {

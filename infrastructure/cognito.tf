@@ -42,7 +42,8 @@ resource "aws_cognito_user_pool_client" "client" {
   default_redirect_uri  = "https://${var.api_domain_name}/auth/redirect"
   logout_urls = [
     "https://${var.api_domain_name}/auth/logout",
-    "https://${var.domain_name}/logout"
+    "https://${var.domain_name}/logout",
+    "http://localhost/auth/logout"
   ]
   
   generate_secret = true
