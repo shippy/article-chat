@@ -36,3 +36,6 @@ jobs:
         cd backend/
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    - name: Force deployment
+      run: |
+        aws ecs update-service --cluster article-chat --service rdx-prod-article-chat --force-new-deployment --no-cli-pager

@@ -5,16 +5,16 @@ resource "aws_iam_user" "github_actions_user" {
 }
 
 resource "aws_iam_access_key" "gh_access_key" {
-    user = aws_iam_user.github_actions_user.name
+  user = aws_iam_user.github_actions_user.name
 }
 
 output "gh_secret_key" {
-    value = aws_iam_access_key.gh_access_key.secret
-    sensitive = true
+  value     = aws_iam_access_key.gh_access_key.secret
+  sensitive = true
 }
 
 output "gh_access_key" {
-    value = aws_iam_access_key.gh_access_key.id
+  value = aws_iam_access_key.gh_access_key.id
 }
 
 data "aws_iam_policy_document" "gh_action_policy_doc" {
@@ -68,16 +68,44 @@ data "aws_iam_policy_document" "gh_action_policy_doc" {
     ]
     resources = ["*"]
   }
+
+  # Allow forcing new deployment
+  statement {
+    sid = "ForceNewDeployment"
+    effect = "Allow"
+    actions = [
+      "ecs:UpdateService",
+    ]
+    resources = [
+      "${module.ecs_alb_service_task.service_arn}"
+    ]
+  }
+
+
+  # Reload ALB
+  statement {
+    sid = "ForceALBReload"
+    effect = "Allow"
+    actions = [
+      "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+      "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+      "ec2:DescribeInstances"   
+    ]
+    resources = [
+      "*"
+    ]
+  }
+
 }
 
 resource "aws_iam_policy" "gh_action_policy" {
   name        = "github_actions_policy"
   description = "Policy for GitHub Actions"
-  policy      = "${data.aws_iam_policy_document.gh_action_policy_doc.json}"
+  policy      = data.aws_iam_policy_document.gh_action_policy_doc.json
 }
 
 resource "aws_iam_user_policy_attachment" "attach_policy" {
-  user       = "${aws_iam_user.github_actions_user.name}"
-  policy_arn = "${aws_iam_policy.gh_action_policy.arn}"
+  user       = aws_iam_user.github_actions_user.name
+  policy_arn = aws_iam_policy.gh_action_policy.arn
 }
 
