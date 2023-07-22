@@ -99,7 +99,7 @@ async def is_authenticated(current_user: User = Depends(get_current_user)):
 @cognito_router.get("/logout")
 async def logout(response: Response):
     domain = os.environ.get("DEPLOYMENT_DOMAIN")
-    response = JSONResponse({"message": "Logout successful"})
+    response = RedirectResponse(url=f"{os.environ.get('FRONTEND_DOMAIN')}/")
     response.delete_cookie(key="access_token", domain=CROSS_SITE_SCRIPTING_COOKIE)
     response.delete_cookie(key="id_token", domain=CROSS_SITE_SCRIPTING_COOKIE)
     response.delete_cookie(key="refresh_token", domain=CROSS_SITE_SCRIPTING_COOKIE)
