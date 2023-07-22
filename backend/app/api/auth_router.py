@@ -7,11 +7,12 @@ from jose import jwt
 from sqlmodel import Session, select
 
 from app.core.auth import (
+    exchange_cognito_token_for_credentials,
     get_cognito_jwks,
-    verify_jwt,
     get_current_user,
     get_hmac_key,
     set_secure_httponly_cookie,
+    verify_jwt,
     CROSS_SITE_SCRIPTING_COOKIE,
 )
 from app.models.user import User
@@ -24,31 +25,10 @@ cognito_router = APIRouter()
 async def process_cognito_code(
     code: str, response: Response, session: Session = Depends(get_session)
 ):
-    data = {
-        "grant_type": "authorization_code",
-        "client_id": os.environ.get("COGNITO_APP_CLIENT_ID"),
-        "client_secret": os.environ.get("COGNITO_CLIENT_SECRET"),
-        "code": code,
-        "redirect_uri": os.environ.get("COGNITO_REDIRECT_URL"),
-    }
-    print(data)
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-    }
-    async with httpx.AsyncClient() as client:
-        cognito_response = await client.post(
-            f"https://{os.environ.get('COGNITO_DOMAIN')}/oauth2/token",
-            data=data,
-            headers=headers,
-        )
-        print(cognito_response.json())
-    if cognito_response.status_code != 200:
-        raise HTTPException(
-            status_code=401, detail="Invalid callback code, or some other error"
-        )
-
     # If this succeeded, we have valid ID token, access token, refresh token, and expiry time
-    cognito_json = cognito_response.json()
+    cognito_json = await exchange_cognito_token_for_credentials("authorization_code", code)
+    
+    # TODO: Refactor the code below this point and use it for refresh token exchange as well
     access_token = cognito_json["access_token"]
     id_token = cognito_json["id_token"]
     refresh_token = cognito_json["refresh_token"]

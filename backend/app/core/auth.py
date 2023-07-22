@@ -4,6 +4,7 @@ from app.core.settings import settings
 from app.core.database import get_session
 from app.models.user import User
 
+import httpx
 from jose import jwt, jwk
 from jose.utils import base64url_decode
 import os
@@ -168,3 +169,36 @@ async def get_current_user(
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     return user
+
+
+async def exchange_cognito_token_for_credentials(
+    grant_type: Literal["authorization_code", "refresh_token"], token: str
+) -> Mapping[str, str]:
+    data = {
+        "grant_type": grant_type,
+        "client_id": os.environ.get("COGNITO_APP_CLIENT_ID"),
+        "client_secret": os.environ.get("COGNITO_CLIENT_SECRET"),
+        "redirect_uri": os.environ.get("COGNITO_REDIRECT_URL"),
+    }
+
+    if grant_type == "authorization_code":
+        data["code"] = token
+    elif grant_type == "refresh_token":
+        data["refresh_token"] = token
+
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+    async with httpx.AsyncClient() as client:
+        cognito_response = await client.post(
+            f"https://{os.environ.get('COGNITO_DOMAIN')}/oauth2/token",
+            data=data,
+            headers=headers,
+        )
+
+    if cognito_response.status_code != 200:
+        raise HTTPException(
+            status_code=401, detail="Invalid callback code, or some other error"
+        )
+    return cognito_response.json()
