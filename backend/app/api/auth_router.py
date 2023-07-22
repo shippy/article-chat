@@ -9,6 +9,7 @@ from sqlmodel import Session, select
 from app.core.auth import (
     get_cognito_jwks,
     verify_jwt,
+    get_current_user,
     get_hmac_key,
     set_secure_httponly_cookie,
     CROSS_SITE_SCRIPTING_COOKIE,
@@ -79,12 +80,20 @@ async def process_cognito_code(
         session.commit()
         session.refresh(user)
 
+    response = RedirectResponse(url=f"{os.environ.get('FRONTEND_DOMAIN')}/")
     # Store all tokens in respective cookies
     set_secure_httponly_cookie(response, "access_token", access_token)
     set_secure_httponly_cookie(response, "id_token", id_token)
     set_secure_httponly_cookie(response, "refresh_token", refresh_token)
 
-    return RedirectResponse(url=f"{os.environ.get('FRONTEND_DOMAIN')}/")
+    return response
+
+
+@cognito_router.get("/is_authenticated")
+async def is_authenticated(current_user: User = Depends(get_current_user)):
+    return JSONResponse(
+        {"message": "User is authenticated", "user": current_user.username}
+    )
 
 
 @cognito_router.get("/logout")
