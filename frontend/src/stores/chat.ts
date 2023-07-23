@@ -13,6 +13,9 @@ export const useChatStore = defineStore({
   state: () => ({
     messages: []
   }),
+  getters: {
+    getMessages(state) { return state.messages }
+  },
   actions: {
     async createChat(docId: number) {
       const chatId = await apiService.startChat(docId)
@@ -24,6 +27,7 @@ export const useChatStore = defineStore({
     },
     async sendMessage({ docId, chatId, message }: SendMessagePayload) {
       await apiService.sendMessage(docId, chatId, message)
+      // FIXME: Add the message to the store instead of re-fetching everything
       await this.fetchMessages(docId, chatId)
     }
   }

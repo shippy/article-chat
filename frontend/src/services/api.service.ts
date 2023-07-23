@@ -32,10 +32,13 @@ export default {
     return response.data
   },
   async sendMessage(docId: Number, chatId: Number, message: String) {
-    await axios.post(
+    const ai_response = await axios.post(
       `${API_URL}/documents/${docId}/chat/${chatId}/message`,
       { message: message },
       { withCredentials: true }
     )
+    // TODO: Add both initial message and the AI response to the store
+    console.log(ai_response.data)
+    return ai_response.data
   }
 }

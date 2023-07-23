@@ -1,53 +1,51 @@
 <template>
     <div id="chat_messages">
         <h2>Chat {{ chatId }} for Document {{ docId }}</h2>
-        <div v-for="msg in chat" :key="msg.id" :className="msg.originator">
+        <div v-for="msg in chat" :key="msg.id" :class="msg.originator">
             {{ msg.content }}
         </div>
     </div>
     <div id="chat_submission">
         <textarea v-model="message"></textarea>
-        <button @click="sendMessage()">Send</button>
+        <button @click="sendMessage">Send</button>
     </div>
 </template>
   
-<script lang="ts">
-import { computed, ref } from 'vue'
+<script setup lang="ts">
+import { computed, ref, onMounted } from 'vue'
 import apiService from '../services/api.service'
 import { useChatStore } from '@/stores/chat';
-import { type Message } from '../types'
+import { type Message } from '@/types'
 
-export default {
-    setup() {
-        const store = useChatStore();
-        // const chat = computed<Message[]>(() => store.$state.messages);
-        const chat = ref<Message[]>([])
-        const message = ref('');
-
-        return { chat, message };
+// Props definition
+const props = defineProps({
+    docId: {
+        type: Number,
+        required: true
     },
-    props: {
-        docId: {
-            type: Number,
-            required: true
-        },
-        chatId: {
-            type: Number,
-            required: true
-        }
-    },
-    async created() {
-        this.chat = await apiService.getChat(this.docId, this.chatId);
-    },
-    methods: {
-        async sendMessage() {
-            await apiService.sendMessage(this.docId, this.chatId, this.message);
-            this.message = '';
-            this.chat = await apiService.getChat(this.docId, this.chatId);
-        }
+    chatId: {
+        type: Number,
+        required: true
     }
+})
+
+const store = useChatStore();
+const chat = computed<Message[]>(() => store.$state.messages);
+const message = ref('');
+
+const sendMessage = async () => {
+    await apiService.sendMessage(props.docId, props.chatId, message.value);
+    message.value = '';
+    // Fetch the latest chat messages
+    await store.fetchMessages(props.docId, props.chatId);
 }
+
+onMounted(async () => {
+    // Fetch the initial chat messages
+    await store.fetchMessages(props.docId, props.chatId);
+});
 </script>
+
   
 <style>
 #chat_messages {
