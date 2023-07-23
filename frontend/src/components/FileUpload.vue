@@ -9,7 +9,8 @@ export default {
     methods: {
         async uploadFile(event: any) {
             const file = event.target.files[0];
-            await apiService.uploadDocument(file);
+            const response = await apiService.uploadDocument(file);
+            return response
         }
     }
 }

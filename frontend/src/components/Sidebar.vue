@@ -11,6 +11,9 @@
             </li>
         </ul>
     </div>
+    <div id="file_upload">
+      <FileUpload />
+    </div>
 </template>
   
 <script lang="ts" setup>
@@ -19,10 +22,11 @@ import { useDocumentsStore } from '@/stores/documents'
 import { type Document } from '../types'
 import router from '@/router';
 import apiService from '@/services/api.service';
+import FileUpload from './FileUpload.vue';
 // import isLoggedIn from '../services/auth.service'
 
 const store = useDocumentsStore();
-const documents = computed<Document[]>(() => store.documents)
+const documents = computed<Document[]>(() => store.$state.documents)
 // const is_authenticated = ref(false);
 // const user = ref('');
 
@@ -47,6 +51,18 @@ const startChat = async (docId: Number) => {
     border-right: 1px solid #ccc;
     border-radius: 5px;
     min-height: 100%;
+    margin: 10px;
+    max-width: 300px;
+}
+
+#file_upload {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    padding: 10px;
+    background-color: #eeeeee2a;
+    border: 1px solid #ccc;
+    border-radius: 5px;
     margin: 10px;
 }
 </style>

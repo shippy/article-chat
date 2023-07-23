@@ -6,6 +6,11 @@ export const useDocumentsStore = defineStore({
   state: () => ({
     documents: []
   }),
+  getters: {
+    getDocuments(state) {
+      return state.documents
+    }
+  },
   actions: {
     async fetchDocuments() {
       const documents = await apiService.getDocuments()

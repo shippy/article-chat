@@ -5,12 +5,15 @@ export const API_URL: String = import.meta.env.VITE_APP_BACKEND_URL
 export default {
   async uploadDocument(file: File) {
     const formData = new FormData()
-    formData.append('file', file)
-    await axios.post(`${API_URL}/upload_document`, formData, {
+    formData.append('uploaded_file', file)
+    const response = await axios.post(`${API_URL}/upload_and_process_file`, formData, {
+      withCredentials: true,
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
+    console.log(response)
+    return response.data
   },
   async getDocuments() {
     const response = await axios.get(`${API_URL}/documents`, { withCredentials: true })
