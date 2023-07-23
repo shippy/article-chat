@@ -7,7 +7,7 @@
     </div>
     <div id="chat_submission">
         <textarea v-model="message"></textarea>
-        <button @click="sendMessage">Send</button>
+        <button :disabled="isSending" @click="sendMessage">Send</button>
     </div>
 </template>
   
@@ -32,10 +32,15 @@ const props = defineProps({
 const store = useChatStore();
 const chat = computed<Message[]>(() => store.$state.messages);
 const message = ref('');
+const isSending = ref(false)
 
 const sendMessage = async () => {
-    await apiService.sendMessage(props.docId, props.chatId, message.value);
+    isSending.value = true
+    const aiResponse = await apiService.sendMessage(props.docId, props.chatId, message.value);
     message.value = '';
+    isSending.value = false
+    // TODO: Add latest AI response to the store instead of refreshing everything
+    
     // Fetch the latest chat messages
     await store.fetchMessages(props.docId, props.chatId);
 }

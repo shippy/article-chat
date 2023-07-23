@@ -52,6 +52,7 @@ const startChat = async (docId: Number) => {
     border-radius: 5px;
     min-height: 100%;
     margin: 10px;
+    min-width: 250px;
     max-width: 300px;
 }
 
@@ -64,5 +65,6 @@ const startChat = async (docId: Number) => {
     border: 1px solid #ccc;
     border-radius: 5px;
     margin: 10px;
+    max-width: 250px;
 }
 </style>
