@@ -1,9 +1,15 @@
 <template>
-    <div v-if="!logged_in" id="login">
-        <h2><a v-bind:href="`https://auth.journalarticle.chat/login?response_type=code&amp;client_id=7acimbldoceq4psub3m6ks0koc&amp;redirect_uri=${callback_url}/auth/callback`">Log in</a></h2>
-    </div>
-    <div v-else>
-        <h2>{{ username }} | <a v-bind:href="`https://auth.journalarticle.chat/logout?client_id=7acimbldoceq4psub3m6ks0koc&amp;logout_uri=${callback_url}/auth/logout`">Log out</a></h2>
+    <div id="login_box">
+        <div v-if="!logged_in" id="login_link">
+            <h2><a
+                    v-bind:href="`https://auth.journalarticle.chat/login?response_type=code&amp;client_id=7acimbldoceq4psub3m6ks0koc&amp;redirect_uri=${callback_url}/auth/callback`">Log
+                    in</a></h2>
+        </div>
+        <div v-else id="logout_link">
+            <h2>{{ username }} | <a
+                    v-bind:href="`https://auth.journalarticle.chat/logout?client_id=7acimbldoceq4psub3m6ks0koc&amp;logout_uri=${callback_url}/auth/logout`">Log
+                    out</a></h2>
+        </div>
     </div>
 </template>
 <script setup lang="ts">
@@ -23,3 +29,15 @@ onMounted(async () => {
 });
 
 </script>
+<style>
+#login_box {
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 10px;
+    background-color: #eeeeee2a;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin: 10px;
+}
+</style>
