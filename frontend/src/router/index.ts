@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import ChatView from '../views/ChatView.vue'
 import isLoggedIn from '../services/auth.service';
 
 const router = createRouter({
@@ -10,6 +11,13 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
       meta: { requiresAuth: false }
+    },
+    {
+      path: '/document/:docId/chat/:chatId',
+      props: true,
+      name: 'chat',
+      component: ChatView,
+      // meta: { requiresAuth: true }
     },
     {
       path: '/about',

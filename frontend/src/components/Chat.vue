@@ -1,9 +1,11 @@
 <template>
-    <div>
-        <h2>Chat for Document {{ docId }}</h2>
+    <div id="chat_messages">
+        <h2>Chat {{ chatId }} for Document {{ docId }}</h2>
         <div v-for="message in chat" :key="message.id">
             {{ message.text }}
         </div>
+    </div>
+    <div id="chat_submission">
         <textarea v-model="message"></textarea>
         <button @click="sendMessage()">Send</button>
     </div>
@@ -46,3 +48,21 @@ export default {
 }
 </script>
   
+<style>
+#chat_messages {
+    /* margin-left: 300px; */
+    margin-top: 50px;
+}
+
+#chat_submission {
+    position: fixed;
+    bottom: 0;
+    left: 300px;
+    padding: 10px;
+    background-color: #eeeeee2a;
+    border-top: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    margin: 10px;
+}
+</style>
