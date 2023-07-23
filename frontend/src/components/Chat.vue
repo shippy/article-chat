@@ -40,7 +40,7 @@ const sendMessage = async () => {
     message.value = '';
     isSending.value = false
     // TODO: Add latest AI response to the store instead of refreshing everything
-    
+
     // Fetch the latest chat messages
     await store.fetchMessages(props.docId, props.chatId);
 }
@@ -66,8 +66,23 @@ onMounted(async () => {
     background-color: #eeeeee2a;
     border-top: 1px solid #ccc;
     border-radius: 5px;
-    width: 100%;
+    width: 70%;
     margin: 10px;
+    display: flex;
+    align-items: stretch; /* Make the items the same height */
+    gap: 1em; /* Space between items */
+}
+
+#chat_submission textarea {
+    margin: 5px;
+    height: 3em;
+    flex-grow: 0.5; /* Make the textarea take up the remaining space */
+}
+
+#chat_submission button {
+    margin: 5px;
+    height: 3em;
+    display: block;
 }
 
 .user {
