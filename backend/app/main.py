@@ -1,5 +1,5 @@
 from typing import Annotated, Mapping
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import Body, Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi_cognito import CognitoToken
 import httpx
@@ -13,7 +13,7 @@ from langchain.document_loaders import UnstructuredPDFLoader
 from langchain.text_splitter import CharacterTextSplitter
 from starlette.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel, Session, select
-from typing import Union, Sequence
+from typing import Annotated, Sequence, Union
 
 from app.core.settings import settings
 from app.core.database import get_session, engine
@@ -21,9 +21,8 @@ from app.core.auth import (
     cognito_eu,
     get_current_user,
 )
-from app.models.document import Document, VectorEmbedding
+from app.models.document import Chat, ChatMessage, ChatOriginator, Document, VectorEmbedding, DocumentWithChats
 from app.models.user import User
-from app.models.chat import Chat, ChatMessage, ChatOriginator
 from app.api.auth_router import cognito_router
 import os
 
@@ -121,7 +120,7 @@ async def upload_and_process_file(
 async def list_documents(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
-) -> Sequence[Document]:
+) -> Sequence[DocumentWithChats]:
     query = select(Document).where(Document.user_id == current_user.id)
     documents = list(session.exec(query))
     return documents
@@ -142,8 +141,9 @@ async def create_new_chat(
     return new_chat.id
 
 
-@app.get("/chats/{chat_id}")
+@app.get("/documents/{document_id}/chat/{chat_id}")
 async def retrieve_chat(
+    document_id: int,
     chat_id: int,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
@@ -187,10 +187,12 @@ def make_submittable_prompt(
     return prompt
 
 
-@app.post("/chats/{chat_id}/message")
+@app.post("/documents/{document_id}/chat/{chat_id}/message")
 async def send_message(
+    document_id: int,
     chat_id: int,
-    message: str,
+    # FIXME: Should this be message: str = Body(..., embed=True)?
+    message: Annotated[str, Body(embed=True)],
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> ChatMessage:

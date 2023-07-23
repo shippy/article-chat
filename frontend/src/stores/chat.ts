@@ -14,6 +14,10 @@ export const useChatStore = defineStore({
     messages: []
   }),
   actions: {
+    async createChat(docId: number) {
+      const chatId = await apiService.startChat(docId)
+      return chatId
+    },
     async fetchMessages(docId: number, chatId: number) {
       const messages = await apiService.getChat(docId, chatId)
       this.messages = messages

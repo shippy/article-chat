@@ -1,8 +1,8 @@
 <template>
     <div id="chat_messages">
         <h2>Chat {{ chatId }} for Document {{ docId }}</h2>
-        <div v-for="message in chat" :key="message.id">
-            {{ message.text }}
+        <div v-for="msg in chat" :key="msg.id" :className="msg.originator">
+            {{ msg.content }}
         </div>
     </div>
     <div id="chat_submission">
@@ -20,7 +20,8 @@ import { type Message } from '../types'
 export default {
     setup() {
         const store = useChatStore();
-        const chat = computed<Message[]>(() => store.$state.messages);
+        // const chat = computed<Message[]>(() => store.$state.messages);
+        const chat = ref<Message[]>([])
         const message = ref('');
 
         return { chat, message };
@@ -64,5 +65,17 @@ export default {
     border-radius: 5px;
     width: 100%;
     margin: 10px;
+}
+
+.user {
+    text-align: right;
+    border-right: 3px solid rgba(255, 0, 0, 0.579);
+    padding: 10px;
+}
+
+.ai {
+    text-align: left;
+    border-left: 3px solid rgba(0, 255, 162, 0.418);
+    padding: 10px;
 }
 </style>

@@ -6,7 +6,8 @@ export interface Document {
 
 export interface Message {
     id: number;
-    text: string;
+    originator: string;
+    content: string;
 }
 
 export interface Chat {

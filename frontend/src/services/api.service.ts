@@ -17,16 +17,24 @@ export default {
     console.log(response.data)
     return response.data
   },
-  async getChat(docId: Number, chatId: Number) {
-    const response = await axios.get(`${API_URL}/document/${docId}/chat/${chatId}`, {
+  async startChat(docId: Number): Promise<Number> {
+    const response = await axios.get(`${API_URL}/documents/${docId}/new_chat`, {
       withCredentials: true
     })
+    console.log(response.data)
+    return response.data
+  },
+  async getChat(docId: Number, chatId: Number) {
+    const response = await axios.get(`${API_URL}/documents/${docId}/chat/${chatId}`, {
+      withCredentials: true
+    })
+    console.log(response.data)
     return response.data
   },
   async sendMessage(docId: Number, chatId: Number, message: String) {
     await axios.post(
-      `${API_URL}/document/${docId}/chat/${chatId}/submit`,
-      { message },
+      `${API_URL}/documents/${docId}/chat/${chatId}/message`,
+      { message: message },
       { withCredentials: true }
     )
   }
