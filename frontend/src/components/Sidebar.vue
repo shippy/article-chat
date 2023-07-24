@@ -19,6 +19,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
 import { useDocumentsStore } from '@/stores/documents'
+import { useChatStore } from '@/stores/chat';
 import { type Document } from '../types'
 import router from '@/router';
 import apiService from '@/services/api.service';
@@ -26,6 +27,7 @@ import FileUpload from './FileUpload.vue';
 // import isLoggedIn from '../services/auth.service'
 
 const store = useDocumentsStore();
+const chatStore = useChatStore();
 const documents = computed<Document[]>(() => store.$state.documents)
 // const is_authenticated = ref(false);
 // const user = ref('');
@@ -38,6 +40,9 @@ onMounted(async () => {
 const startChat = async (docId: Number) => {
   const chatId = await apiService.startChat(docId);
   router.push({ name: 'chat' , params: { docId: docId.toString(), chatId: chatId.toString()}})
+  // TODO: Update only the one item in the store instead of refreshing everything
+  store.fetchDocuments();
+  chatStore.fetchMessages(docId as number, chatId as number);
 };
 </script>
 
