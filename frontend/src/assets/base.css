@@ -70,4 +70,50 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* layout: */
+  grid-template-columns: 1fr 4fr;
+  grid-template-rows: auto 1fr;
+  height: 100vh; /* viewport height */
+  margin: 0;
+  gap: 1em; /* Spacing between the grid areas */
+  grid-template-areas: 
+  "header header"
+  "sidebar chat"
+  "sidebar textarea";
+
+}
+
+/* Assigning grid areas */
+.header {
+  grid-area: header;
+  background-color: #eeeeee2a;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+}
+.sidebar {
+  grid-area: sidebar;
+  overflow-y: auto; /* For scrollable sidebar */
+}
+.content {
+  grid-area: chat;
+  overflow-y: auto; /* For scrollable content */
+}
+.textarea {
+  grid-area: textarea;
+}
+
+/* Flexbox for sidebar and profile box */
+.sidebar {
+  display: flex;
+  flex-direction: column; /* Stack items vertically */
+  justify-content: space-between; /* Maximizes space between flex items */
+}
+
+.sidebar .upload-button {
+  align-self: flex-end; /* Align upload button to bottom */
+}
+
+.profile .logout-link {
+  align-self: flex-end; /* Align logout link to top right */
 }

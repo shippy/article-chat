@@ -1,6 +1,6 @@
 <template>
     <div id="chat">
-        <Chat :docId=docId :chatId=chatId />
+        <Chat :docId="docId as number" :chatId="chatId as number" />
     </div>
 </template>
   
@@ -24,7 +24,11 @@ const props = defineProps({
 
 <style>
 #chat {
-    margin-left: 300px;
-    margin-top: 50px;
+    grid-area: chat;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin-left: 320px; /* considering 300px width of sidebar and 20px of some padding */
+    width: calc(100% - 320px); /* considering 300px width of sidebar and 20px of some padding */
 }
 </style>
