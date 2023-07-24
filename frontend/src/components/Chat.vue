@@ -6,7 +6,7 @@
         </div>
     </div>
     <div id="chat_submission">
-        <textarea v-model="message"></textarea>
+        <textarea :disabled="isSending" v-model="message" @keyup.enter.prevent="sendMessage"></textarea>
         <button :disabled="isSending" @click="sendMessage">Send</button>
     </div>
 </template>
