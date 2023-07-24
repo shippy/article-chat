@@ -6,7 +6,7 @@ export default {
   async uploadDocument(file: File) {
     const formData = new FormData()
     formData.append('uploaded_file', file)
-    const response = await axios.post(`${API_URL}/upload_and_process_file`, formData, {
+    const response = await axios.post(`${API_URL}/documents/upload`, formData, {
       withCredentials: true,
       headers: {
         'Content-Type': 'multipart/form-data'
