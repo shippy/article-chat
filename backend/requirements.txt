@@ -9,6 +9,7 @@ fastapi-cognito ~= 2.3.0
 python-multipart ~= 0.0.6
 sqlmodel[postgresql] ~= 0.0.8
 pytest
+pytest-asyncio
 pgvector
 psycopg2-binary
 gunicorn
