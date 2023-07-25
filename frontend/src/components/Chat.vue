@@ -1,11 +1,11 @@
 <template>
     <div className="content">
-        <div id="chat_messages">
+        <!-- <div id="chat_messages"> -->
             <h2>Chat {{ chatId }} for Document {{ docId }}</h2>
             <div v-for="msg in chat" :key="msg.id" :class="msg.originator">
                 {{ msg.content }}
             </div>
-        </div>
+        <!-- </div> -->
     </div>
     
     <div className="textarea" id="chat_submission">
