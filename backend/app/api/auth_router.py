@@ -72,7 +72,7 @@ async def process_cognito_code(
 @cognito_router.get("/is_authenticated")
 async def is_authenticated(current_user: User = Depends(get_current_user)):
     return JSONResponse(
-        {"message": "User is authenticated", "user": current_user.username}
+        {"is_authenticated": True, "user": current_user.username}
     )
 
 

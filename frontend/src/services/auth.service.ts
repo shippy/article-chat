@@ -8,10 +8,11 @@ const AUTH_URL: String = 'https://auth.journalarticle.chat'
 export default {
   // Check whether the user is logged in by checking the API is_authenticated endpoint
   async isLoggedIn(): Promise<{ is_authenticated: boolean; user: string | null }> {
-    const response = await axios.get(`${API_URL}/auth/is_authenticated`, { withCredentials: true })
-    if (response.status === 200) {
+    try {
+      const response = await axios.get(`${API_URL}/auth/is_authenticated`, { withCredentials: true })
       return response.data
-    } else {
+    } catch (error) {
+      console.log(error)
       return { is_authenticated: false, user: null }
     }
   }

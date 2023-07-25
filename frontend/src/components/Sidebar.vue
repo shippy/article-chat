@@ -59,6 +59,7 @@ const startChat = async (docId: Number) => {
     width: 250px;
     max-width: 300px;
     overflow-y: auto;
+    padding: 50px 0;
     /* other styles... */
 }
 /* #sidebar {

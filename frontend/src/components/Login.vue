@@ -22,7 +22,7 @@ const callback_url = import.meta.env.VITE_APP_BACKEND_URL
 
 onMounted(async () => {
     const response = await isLoggedIn.isLoggedIn();
-    if (response) {
+    if (response.is_authenticated) {
         username.value = response.user ?? '';
         logged_in.value = true;
     }
