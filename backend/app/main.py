@@ -21,7 +21,14 @@ from app.core.auth import (
     cognito_eu,
     get_current_user,
 )
-from app.models.document import Chat, ChatMessage, ChatOriginator, Document, VectorEmbedding, DocumentWithChats
+from app.models.document import (
+    Chat,
+    ChatMessage,
+    ChatOriginator,
+    Document,
+    VectorEmbedding,
+    DocumentWithChats,
+)
 from app.models.user import User
 from app.api.auth_router import cognito_router
 import os
@@ -121,7 +128,11 @@ async def list_documents(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> Sequence[DocumentWithChats]:
-    query = select(Document).where(Document.user_id == current_user.id).order_by(col(Document.created_at).desc())
+    query = (
+        select(Document)
+        .where(Document.user_id == current_user.id)
+        .order_by(col(Document.created_at).desc())
+    )
     documents = list(session.exec(query))
     return documents
 
@@ -156,10 +167,11 @@ async def retrieve_chat(
 
 
 def get_k_similar_chunks(
-    query_embedding: Sequence[float], session: Session, k: int = 3
+    query_embedding: Sequence[float], document_id: int, session: Session, k: int = 3
 ) -> Sequence[str]:
     query = (
         select(VectorEmbedding.content)
+        .where(VectorEmbedding.document_id == document_id)
         .order_by(VectorEmbedding.embedding.l2_distance(query_embedding))
         .limit(k)
     )
@@ -202,7 +214,9 @@ async def send_message(
     new_message = ChatMessage(chat_id=chat_id, user_id=current_user.id, content=message)
 
     msg_embedding = OpenAIEmbeddings().embed_documents([message])[0]
-    relevant_docs = get_k_similar_chunks(msg_embedding, session)
+    relevant_docs = get_k_similar_chunks(
+        query_embedding=msg_embedding, document_id=document_id, session=session
+    )
 
     gpt_prompt = make_submittable_prompt(message, relevant_docs)
 
@@ -220,11 +234,11 @@ async def send_message(
         content=response.content,
         originator=ChatOriginator.ai,
     )
-    
+
     session.add_all([new_message, ai_response])
     session.commit()
     session.refresh(ai_response)
-    
+
     return ai_response
 
 
