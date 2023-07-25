@@ -73,13 +73,13 @@ async def extract_embeddings_from_file(
 
     splitter = CharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=100)
     docs = splitter.split_documents(loaded_document)
-
-    db_doc = Document(title=uploaded_file.filename, user_id=current_user.id)
+    name = uploaded_file.filename or "Untitled"
+    db_doc = Document(title=name, user_id=current_user.id)
     session.add(db_doc)
     session.commit()
     session.refresh(db_doc)
 
-    embedder = OpenAIEmbeddings()
+    embedder = OpenAIEmbeddings()  # type: ignore
     chunks_to_embed = [text.page_content for text in docs]
     vectors = embedder.embed_documents(chunks_to_embed)
     db_vectors = [
@@ -123,11 +123,11 @@ async def upload_and_process_file(
     # return RedirectResponse(url=f"/documents/{document_id}/new_chat")
 
 
-@app.get("/documents")
+@app.get("/documents", response_model=Sequence[DocumentWithChats])
 async def list_documents(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
-) -> Sequence[DocumentWithChats]:
+):
     query = (
         select(Document)
         .where(Document.user_id == current_user.id)
@@ -149,7 +149,7 @@ async def create_new_chat(
     session.commit()
     session.refresh(new_chat)
 
-    return new_chat.id
+    return new_chat.id  # type: ignore
 
 
 @app.get("/documents/{document_id}/chat/{chat_id}")
@@ -172,7 +172,7 @@ def get_k_similar_chunks(
     query = (
         select(VectorEmbedding.content)
         .where(VectorEmbedding.document_id == document_id)
-        .order_by(VectorEmbedding.embedding.l2_distance(query_embedding))
+        .order_by(VectorEmbedding.embedding.l2_distance(query_embedding))  # type: ignore
         .limit(k)
     )
     results = session.exec(query)
@@ -183,7 +183,7 @@ def get_k_similar_chunks(
 TEMPLATE = """
 You are a good chatbot that answers questions regarding published journal papers. You are academic and precise.
 
-The relevant chunks of the paper are:
+The chunks of the paper relevant to the following question are:
 
 - {chunks}.
 
@@ -213,17 +213,32 @@ async def send_message(
 
     new_message = ChatMessage(chat_id=chat_id, user_id=current_user.id, content=message)
 
-    msg_embedding = OpenAIEmbeddings().embed_documents([message])[0]
+    msg_embedding = OpenAIEmbeddings().embed_documents([message])[0]  # type: ignore
     relevant_docs = get_k_similar_chunks(
         query_embedding=msg_embedding, document_id=document_id, session=session
     )
 
     gpt_prompt = make_submittable_prompt(message, relevant_docs)
 
-    chat = ChatOpenAI(model="gpt-4", temperature=0)
+    chat = ChatOpenAI(model="gpt-4", temperature=0)  # type: ignore
     # TODO: Add some prior chat messages to the prompt?
+    previous_messages_query = (
+        select(ChatMessage)
+        .where(ChatMessage.chat_id == chat_id)
+        .order_by(col(ChatMessage.created_at).desc())
+        .limit(2)
+    )
+    previous_messages = session.exec(previous_messages_query)
+    previous_messages_scaled = [
+        AIMessage(content=x.content)
+        if x.originator == "ai"
+        else HumanMessage(content=x.content)
+        for x in previous_messages
+    ]
     response = chat(
         [
+            SystemMessage(content="Previous two messages from this conversation are:"),
+            *previous_messages_scaled,
             SystemMessage(content=gpt_prompt),
             HumanMessage(content=message),
         ]
