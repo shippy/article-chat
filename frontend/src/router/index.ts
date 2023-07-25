@@ -17,16 +17,7 @@ const router = createRouter({
       props: true,
       name: 'chat',
       component: ChatView,
-      // meta: { requiresAuth: true }
-    },
-    {
-      path: '/about',
-      name: 'about',
-      meta: { requiresAuth: true },
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
+      meta: { requiresAuth: true }
     }
   ]
 })
