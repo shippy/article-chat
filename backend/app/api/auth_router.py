@@ -60,7 +60,7 @@ async def process_cognito_code(
         session.commit()
         session.refresh(user)
 
-    response = RedirectResponse(url=f"{os.environ.get('FRONTEND_DOMAIN')}/")
+    response = RedirectResponse(url=f"{os.environ.get('FRONTEND_DOMAIN')}/start")
     # Store all tokens in respective cookies
     set_secure_httponly_cookie(response, "access_token", access_token)
     set_secure_httponly_cookie(response, "id_token", id_token)
