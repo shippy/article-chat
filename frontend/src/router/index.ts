@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import ChatView from '../views/ChatView.vue'
+import StartView from '../views/StartView.vue'
 import isLoggedIn from '../services/auth.service';
 
 const router = createRouter({
@@ -13,20 +14,17 @@ const router = createRouter({
       meta: { requiresAuth: false }
     },
     {
+      path: '/start',
+      name: 'start',
+      component: StartView,
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/document/:docId/chat/:chatId',
       props: true,
       name: 'chat',
       component: ChatView,
-      // meta: { requiresAuth: true }
-    },
-    {
-      path: '/about',
-      name: 'about',
-      meta: { requiresAuth: true },
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
+      meta: { requiresAuth: true }
     }
   ]
 })

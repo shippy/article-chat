@@ -12,7 +12,7 @@ import os
 from langchain.document_loaders import UnstructuredPDFLoader
 from langchain.text_splitter import CharacterTextSplitter
 from starlette.middleware.cors import CORSMiddleware
-from sqlmodel import SQLModel, Session, select
+from sqlmodel import SQLModel, Session, col, select
 from typing import Annotated, Sequence, Union
 
 from app.core.settings import settings
@@ -121,7 +121,7 @@ async def list_documents(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> Sequence[DocumentWithChats]:
-    query = select(Document).where(Document.user_id == current_user.id)
+    query = select(Document).where(Document.user_id == current_user.id).order_by(col(Document.created_at).desc())
     documents = list(session.exec(query))
     return documents
 
