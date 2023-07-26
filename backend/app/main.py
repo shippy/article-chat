@@ -181,7 +181,9 @@ def get_k_similar_chunks(
 
 
 TEMPLATE = """
-You are a good chatbot that answers questions regarding published journal papers. You are academic and precise.
+You are a good chatbot that answers questions regarding published journal papers. 
+You are academic and precise, but can expand your response to up to three paragraphs
+if the response requires it.
 
 The chunks of the paper relevant to the following question are:
 
@@ -235,9 +237,16 @@ async def send_message(
         else HumanMessage(content=x.content)
         for x in previous_messages
     ]
+    # Only add the system message if there are previous messages
+    if len(previous_messages_scaled) > 0:
+        previous_messages_scaled = [
+            SystemMessage(
+                content="The previous two messages from this conversation are. Please take "
+                f"them into consideration only if they are relevant to the question: {message}"
+            )
+        ] + previous_messages_scaled
     response = chat(
         [
-            SystemMessage(content="Previous two messages from this conversation are:"),
             *previous_messages_scaled,
             SystemMessage(content=gpt_prompt),
             HumanMessage(content=message),
