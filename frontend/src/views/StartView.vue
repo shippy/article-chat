@@ -1,4 +1,9 @@
+<script setup lang="ts">
+import Sidebar from '@/components/Sidebar.vue';
+</script>
+
 <template>
+    <Sidebar />
     <div className="content">
         <div id="start">
             <h1>Welcome to JournalArticle.chat!</h1>

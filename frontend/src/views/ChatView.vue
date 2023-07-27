@@ -1,13 +1,10 @@
-<template>
-    <div id="chat">
-        <Chat :docId="docId as number" :chatId="chatId as number" />
-    </div>
-</template>
-  
 <script setup lang="ts">
 import { useChatStore } from '@/stores/chat';
+import Sidebar from '@/components/Sidebar.vue';
 import Chat from '../components/Chat.vue'
 // import { defineProps } from 'vue'
+import { ref, onMounted } from 'vue'
+import isLoggedIn from '@/services/auth.service'
 
 const props = defineProps({
     docId: {
@@ -19,8 +16,14 @@ const props = defineProps({
         required: true
     }
 })
-
 </script>
+
+<template>
+    <Sidebar />
+    <div id="chat">
+        <Chat :docId="docId as number" :chatId="chatId as number" />
+    </div>
+</template>
 
 <style>
 #chat {

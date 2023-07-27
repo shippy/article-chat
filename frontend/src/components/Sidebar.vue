@@ -27,17 +27,13 @@ import { type Document } from '../types'
 import router from '@/router';
 import apiService from '@/services/api.service';
 import FileUpload from './FileUpload.vue';
-// import isLoggedIn from '../services/auth.service'
 
 const store = useDocumentsStore();
 const chatStore = useChatStore();
 const documents = computed<Document[]>(() => store.$state.documents)
-// const is_authenticated = ref(false);
-// const user = ref('');
 
 onMounted(async () => {
   await store.fetchDocuments();
-  // { is_authenticated, user } = await isLoggedIn.isLoggedIn();
 });
 
 const startChat = async (docId: Number) => {
