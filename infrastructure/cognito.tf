@@ -19,6 +19,12 @@ resource "aws_cognito_user_pool" "main" {
   admin_create_user_config {
     allow_admin_create_user_only = true
   }
+
+  email_configuration {
+    from_email_address     = "no_reply@${var.domain_name}"
+    source_arn             = module.cognito_mailer.ses_domain_identity.arn
+    email_sending_account  = "DEVELOPER"
+  }
 }
 
 resource "aws_cognito_user_pool_client" "client" {
