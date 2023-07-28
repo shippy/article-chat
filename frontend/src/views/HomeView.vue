@@ -2,7 +2,7 @@
   <div class="landing-page">
     <section class="hero">
       <h1>Chat with Journal Articles</h1>
-      <p>Upload your documents and talk to them in a unique chat interface!</p>
+      <p>Upload your documents and chat with their contents!</p>
       <p><a href="https://www.linkedin.com/in/simonpodhajsky">Contact Simon for beta access.</a></p>
     </section>
     <section class="features">
@@ -38,10 +38,24 @@
   display: flex;
   justify-content: space-around;
   padding: 50px;
+  flex-wrap: wrap;
 }
 
 .feature {
   width: 30%;
+  margin-bottom: 30px;
+}
+
+/* Responsive Design */
+@media only screen and (max-width: 800px) {
+  .features {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .feature {
+    width: 80%;
+  }
 }
 
 .illustration img {
