@@ -109,7 +109,8 @@ async def list_documents(
     current_user: User = Depends(get_current_user),
 ) -> Sequence[Document]:
     query = (
-        select(Document).where(Document.user_id == current_user.id)
+        select(Document)
+        .where(Document.user_id == current_user.id)
         .order_by(col(Document.created_at).desc())
     )
     documents = list(session.exec(query))
