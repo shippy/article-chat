@@ -18,7 +18,7 @@ from app.main import app, get_session, get_current_user
 
 # from app.core.auth import get_current_user
 # from app.core.database import get_session
-from app.models.document import Document
+from app.models.document import Document, Chat, ChatMessage
 from app.models.user import User
 
 
@@ -110,3 +110,40 @@ async def test_list_documents_unauthorized(client: TestClient, documents: List[D
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) == 0
 
+
+# Test that chats are returned only for a given document
+@pytest_asyncio.fixture
+async def chats(session: Session, documents: List[Document]) -> List[Chat]:
+    chats = [
+        Chat(document_id=documents[0].id, title="Chat 1"),
+        Chat(document_id=documents[0].id, title="Chat 2"),
+        Chat(document_id=documents[1].id, title="Chat 3"),
+    ]
+    session.add_all(chats)
+    session.commit()
+    for chat in chats:
+        session.refresh(chat)
+        
+    messages = [
+        ChatMessage(content="Message 1", chat_id=chats[0].id, user_id=1),
+        ChatMessage(content="Message 2", chat_id=chats[1].id, user_id=1),
+        ChatMessage(content="Message 3", chat_id=chats[2].id, user_id=1),
+        ChatMessage(content="Message 4", chat_id=chats[2].id, user_id=1),
+    ]
+    session.add_all(messages)
+    session.commit()
+    
+    return chats
+
+
+@pytest.mark.asyncio
+async def test_list_chats(
+    client: TestClient,
+    documents: List[Document],
+    chats: List[Chat],
+):
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    response = client.get(f"/documents/{documents[0].id}/chat/{chats[2].id}")
+    app.dependency_overrides.clear()
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()) == 2
