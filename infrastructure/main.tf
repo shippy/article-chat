@@ -6,13 +6,13 @@ terraform {
     }
   }
   
-  # cloud {
-  #   organization = "simonpodhajsky"
+  cloud {
+    organization = "simonpodhajsky"
 
-  #   workspaces {
-  #     name = "article-chat"
-  #   }
-  # }
+    workspaces {
+      name = "article-chat"
+    }
+  }
 
   # backend "s3" {
   #   bucket = "chatarticle-terraform-state"
