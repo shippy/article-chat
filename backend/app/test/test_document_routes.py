@@ -92,7 +92,7 @@ async def test_list_documents(
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) == len(documents)
     assert all(doc["title"] in [d.title for d in documents] for doc in response.json())
-
+    assert all("chats" in doc for doc in response.json())
 
 # Now ensure that unauthenticated users get a 401
 @pytest.mark.asyncio
