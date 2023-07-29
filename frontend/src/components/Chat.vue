@@ -1,12 +1,15 @@
 <template>
-    <div id="chat_messages">
-        <h2>Chat {{ chatId }} for Document {{ docId }}</h2>
-        <div v-for="msg in chat" :key="msg.id" :class="msg.originator">
-            {{ msg.content }}
-        </div>
+    <div className="content">
+        <!-- <div id="chat_messages"> -->
+            <h2>Chat {{ chatId }} for Document {{ docId }}</h2>
+            <div v-for="msg in chat" :key="msg.id" :class="msg.originator">
+                {{ msg.content }}
+            </div>
+        <!-- </div> -->
     </div>
-    <div id="chat_submission">
-        <textarea v-model="message"></textarea>
+    
+    <div className="textarea" id="chat_submission">
+        <textarea :disabled="isSending" v-model="message" @keyup.enter.prevent="sendMessage"></textarea>
         <button :disabled="isSending" @click="sendMessage">Send</button>
     </div>
 </template>
@@ -54,29 +57,22 @@ onMounted(async () => {
   
 <style>
 #chat_messages {
-    /* margin-left: 300px; */
-    margin-top: 50px;
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 10px;
 }
-
 #chat_submission {
-    position: fixed;
-    bottom: 0;
-    left: 300px;
-    padding: 10px;
-    background-color: #eeeeee2a;
-    border-top: 1px solid #ccc;
-    border-radius: 5px;
-    width: 70%;
-    margin: 10px;
+    position: fixed; /* fix the position */
+    bottom: 0; /* stick it to the bottom */
+    left: 320px; /* considering 300px width of sidebar and 20px of some padding */
+    width: calc(100% - 320px); /* considering 300px width of sidebar and 20px of some padding */
     display: flex;
-    align-items: stretch; /* Make the items the same height */
-    gap: 1em; /* Space between items */
+    padding: 1em 50px;
 }
-
 #chat_submission textarea {
     margin: 5px;
     height: 3em;
-    flex-grow: 0.5; /* Make the textarea take up the remaining space */
+    flex-grow: 1; /* Make the textarea take up the remaining space */
 }
 
 #chat_submission button {

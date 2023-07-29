@@ -13,7 +13,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.document_loaders import UnstructuredPDFLoader
 from langchain.text_splitter import CharacterTextSplitter
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 import tempfile
 from typing import Annotated, Sequence, Union
 
@@ -108,7 +108,10 @@ async def list_documents(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> Sequence[Document]:
-    query = select(Document).where(Document.user_id == current_user.id)
+    query = (
+        select(Document).where(Document.user_id == current_user.id)
+        .order_by(col(Document.created_at).desc())
+    )
     documents = list(session.exec(query))
     return documents
 
@@ -143,10 +146,11 @@ async def retrieve_chat(
 
 
 def get_k_similar_chunks(
-    query_embedding: Sequence[float], session: Session, k: int = 3
+    query_embedding: Sequence[float], document_id: int, session: Session, k: int = 3
 ) -> Sequence[str]:
     query = (
         select(VectorEmbedding.content)
+        .where(VectorEmbedding.document_id == document_id)
         .order_by(VectorEmbedding.embedding.l2_distance(query_embedding))  # type: ignore
         .limit(k)
     )
@@ -156,9 +160,11 @@ def get_k_similar_chunks(
 
 
 TEMPLATE = """
-You are a good chatbot that answers questions regarding published journal papers. You are academic and precise.
+You are a good chatbot that answers questions regarding published journal papers. 
+You are academic and precise, but can expand your response to up to three paragraphs
+if the response requires it.
 
-The relevant chunks of the paper are:
+The chunks of the paper relevant to the following question are:
 
 - {chunks}.
 
@@ -189,14 +195,37 @@ async def send_message(
     new_message = ChatMessage(chat_id=chat_id, user_id=current_user.id, content=message)
 
     msg_embedding = OpenAIEmbeddings().embed_documents([message])[0]  # type: ignore
-    relevant_docs = get_k_similar_chunks(msg_embedding, session)
+    relevant_docs = get_k_similar_chunks(
+        query_embedding=msg_embedding, document_id=document_id, session=session
+    )
 
     gpt_prompt = make_submittable_prompt(message, relevant_docs)
 
     chat = ChatOpenAI(model="gpt-4", temperature=0)  # type: ignore
-    # TODO: Add some prior chat messages to the prompt?
+    previous_messages_query = (
+        select(ChatMessage)
+        .where(ChatMessage.chat_id == chat_id)
+        .order_by(col(ChatMessage.created_at).desc())
+        .limit(2)
+    )
+    previous_messages = session.exec(previous_messages_query)
+    previous_messages_scaled = [
+        AIMessage(content=x.content)
+        if x.originator == "ai"
+        else HumanMessage(content=x.content)
+        for x in previous_messages
+    ]
+    # Only add the system message if there are previous messages
+    if len(previous_messages_scaled) > 0:
+        previous_messages_scaled = [
+            SystemMessage(
+                content="The previous two messages from this conversation are. Please take "
+                f"them into consideration only if they are relevant to the question: {message}"
+            )
+        ] + previous_messages_scaled
     response = chat(
         [
+            *previous_messages_scaled,
             SystemMessage(content=gpt_prompt),
             HumanMessage(content=message),
         ]

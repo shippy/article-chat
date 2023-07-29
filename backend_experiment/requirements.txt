@@ -1,6 +1,0 @@
-FastAPI[all] ~= 0.96.0
-fastapi-cognito ~= 2.3.0
-gunicorn
-python-jose[cryptography]
-pyjwt[crypto]
-httpx
