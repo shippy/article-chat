@@ -51,9 +51,8 @@ async def test_list_documents_unauthorized(
     assert len(response.json()) == 0
 
 
-# Test that chats are returned only for a given document
 @pytest.mark.asyncio
-async def test_list_chats(
+async def test_list_messages_in_chat(
     client: TestClient,
     documents: List[Document],
     chats: List[Chat],
@@ -63,3 +62,26 @@ async def test_list_chats(
     app.dependency_overrides.clear()
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()) == 2
+
+
+@pytest.mark.asyncio
+async def test_list_messages_in_chat_unauthenticated(
+    client: TestClient,
+    documents: List[Document],
+    chats: List[Chat],
+):
+    response = client.get(f"/documents/{documents[0].id}/chat/{chats[2].id}")
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    
+    
+@pytest.mark.asyncio
+async def test_list_messages_in_chat_unauthorized(
+    client: TestClient,
+    documents: List[Document],
+    chats: List[Chat],
+):
+    app.dependency_overrides[get_current_user] = mock_get_another_user
+    response = client.get(f"/documents/{documents[0].id}/chat/{chats[2].id}")
+    app.dependency_overrides.clear()
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()) == 0
