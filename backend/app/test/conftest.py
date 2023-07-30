@@ -1,3 +1,5 @@
+# Setup per https://sqlmodel.tiangolo.com/tutorial/fastapi/tests/
+
 from fastapi.testclient import TestClient
 import pytest
 import pytest_asyncio

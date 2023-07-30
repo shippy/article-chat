@@ -82,25 +82,19 @@ async def extract_embeddings_from_file(
 @document_router.post("/upload")
 async def upload_and_process_file(
     uploaded_file: UploadFile = File(...),
-    # token: CognitoToken = Depends(cognito_eu.auth_required),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> int:
     try:
-        # contents = uploaded_file.file.read()
-        # uploaded_file.file.seek(0)
-        # await upload_file(uploaded_file)
         document_id = await extract_embeddings_from_file(
             uploaded_file, session, current_user=current_user
         )
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading file to S3: {e}")
     finally:
         uploaded_file.file.close()
 
     return document_id
-    # return RedirectResponse(url=f"/documents/{document_id}/new_chat")
 
 
 @document_router.get("/", response_model=Sequence[DocumentWithChats])
