@@ -1,3 +1,7 @@
 ipykernel
 pytest
+pytest-mock
 pytest-asyncio
+pytest-watcher
+pytest-clarity
+pytest-sugar
