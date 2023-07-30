@@ -1,6 +1,5 @@
 langchain
 openai
-ipykernel
 unstructured[pdf2image]
 pdfminer.six
 tiktoken
@@ -8,11 +7,9 @@ FastAPI[all] ~= 0.96.0
 fastapi-cognito ~= 2.3.0
 python-multipart ~= 0.0.6
 sqlmodel[postgresql] ~= 0.0.8
-pytest
-pytest-asyncio
 pgvector
 psycopg2-binary
 gunicorn
 python-jose[cryptography]
 httpx
-pyjwt[crypto]
+# pyjwt[crypto]
