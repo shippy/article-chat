@@ -3,6 +3,7 @@ from io import BytesIO
 from typing import List
 from fastapi.testclient import TestClient
 
+import os
 from pathlib import Path
 import pytest
 import pytest_asyncio
@@ -155,6 +156,10 @@ async def test_create_new_chat_unauthenticated(client: TestClient, session: Sess
     response = client.get(f"/documents/{document.id}/new_chat")
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
+
+async def mock_embed_message(message):
+    return [0.9] * 1536
+
 # Define a mock for get_ai_response function
 async def mock_get_ai_response(chat_id, session, gpt_prompt, message):
     from langchain.schema import AIMessage
@@ -169,8 +174,10 @@ def mock_get_similar_chunks(query_embedding, document_id, session, k=3):
     ]
 
 @pytest.mark.asyncio
+@patch('app.api.document_router.embed_message', new=mock_embed_message)
 @patch('app.api.document_router.get_ai_response', new=mock_get_ai_response)
 @patch('app.api.document_router.get_k_similar_chunks', new=mock_get_similar_chunks)
+@patch.dict(os.environ, {"OPENAI_API_KEY": "mock_key"})  # Check that key isn't actually being used
 async def test_send_message(client: TestClient, session: Session, chats: List[Chat], user: User):
     app.dependency_overrides[get_current_user] = mock_get_current_user
 
