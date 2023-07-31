@@ -18,6 +18,12 @@ resource "aws_cognito_user_pool" "main" {
 
   admin_create_user_config {
     allow_admin_create_user_only = true
+
+    invite_message_template {
+      email_message = "Your username is {username} and temporary password is {####}."
+      email_subject = "Your temporary password to JournalArticle.chat"
+      sms_message   = "Your username is {username} and temporary password is {####}."
+    }
   }
 
   email_configuration {
