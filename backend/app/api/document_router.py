@@ -12,10 +12,11 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.document_loaders import UnstructuredPDFLoader
 from langchain.text_splitter import CharacterTextSplitter
+import os
 
 from sqlmodel import Session, col, select
 import tempfile
-from typing import Annotated, Sequence, Union
+from typing import Annotated, Optional, Sequence, Union
 
 
 from app.core.database import get_session, engine
@@ -36,28 +37,32 @@ CHUNK_SIZE = 1000
 
 
 async def extract_embeddings_from_file(
-    uploaded_file: UploadFile,
+    contents: bytes,
+    filename: Optional[str],
     session: Session,
     current_user: User,
 ) -> int:
     try:
-        # Get the contents of the uploaded file
-        contents = await uploaded_file.read()
-
-        # Create a temporary file
-        with tempfile.NamedTemporaryFile(delete=True) as temp:
-            # Write the contents of the uploaded file to the temporary file
-            temp.write(contents)
-            temp.flush()  # Ensure data is written
-            loader = UnstructuredPDFLoader(temp.name)
-            loaded_document = loader.load()
+        # Create a temporary file so that we can use the unstructured loader
+        temp = tempfile.NamedTemporaryFile(delete=False)
+        # Write the contents of the uploaded file to the temporary file
+        temp.write(contents)
+        temp.flush()  # Ensure data is written
+        loader = UnstructuredPDFLoader(temp.name)
+        loaded_document = loader.load()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading file in: {e}")
+    finally:
+        temp.close()
+        os.remove(temp.name)
 
     splitter = CharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=100)
     docs = splitter.split_documents(loaded_document)
 
-    document_name = uploaded_file.filename or "Untitled"
+    if filename is not None and isinstance(filename, str):
+        document_name = filename[:100]
+    else:
+        document_name = "Untitled"
 
     db_doc = Document(title=document_name, user_id=current_user.id)
     session.add(db_doc)
@@ -86,11 +91,14 @@ async def upload_and_process_file(
     current_user: User = Depends(get_current_user),
 ) -> int:
     try:
+        contents = await uploaded_file.read()
         document_id = await extract_embeddings_from_file(
-            uploaded_file, session, current_user=current_user
+            contents, uploaded_file.filename, session, current_user=current_user
         )
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error uploading file to S3: {e}")
+        raise HTTPException(status_code=500, detail=f"Error uploading file: {e}")
     finally:
         uploaded_file.file.close()
 
@@ -140,6 +148,10 @@ async def retrieve_chat(
     return list(chat_messages)
 
 
+async def embed_message(message: str) -> Sequence[float]:
+    return OpenAIEmbeddings().embed_documents([message])[0]  # type: ignore
+
+
 def get_k_similar_chunks(
     query_embedding: Sequence[float], document_id: int, session: Session, k: int = 3
 ) -> Sequence[str]:
@@ -175,28 +187,18 @@ def make_submittable_prompt(
     return prompt
 
 
-@document_router.post("/{document_id}/chat/{chat_id}/message")
-async def send_message(
-    document_id: int,
+async def get_ai_response(
     chat_id: int,
-    # FIXME: Should this be message: str = Body(..., embed=True)?
-    message: Annotated[str, Body(embed=True)],
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    session: Session,
+    gpt_prompt: str,
+    message: str,
+    model: str = "gpt-4",
+    temperature: float = 0,
 ) -> ChatMessage:
     from langchain.chat_models import ChatOpenAI
     from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
-    new_message = ChatMessage(chat_id=chat_id, user_id=current_user.id, content=message)
-
-    msg_embedding = OpenAIEmbeddings().embed_documents([message])[0]  # type: ignore
-    relevant_docs = get_k_similar_chunks(
-        query_embedding=msg_embedding, document_id=document_id, session=session
-    )
-
-    gpt_prompt = make_submittable_prompt(message, relevant_docs)
-
-    chat = ChatOpenAI(model="gpt-4", temperature=0)  # type: ignore
+    chat = ChatOpenAI(model=model, temperature=temperature)  # type: ignore
     previous_messages_query = (
         select(ChatMessage)
         .where(ChatMessage.chat_id == chat_id)
@@ -225,10 +227,30 @@ async def send_message(
             HumanMessage(content=message),
         ]
     )
+    return response
+
+
+@document_router.post("/{document_id}/chat/{chat_id}/message")
+async def send_message(
+    document_id: int,
+    chat_id: int,
+    message: Annotated[str, Body(embed=True)],
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> ChatMessage:
+    new_message = ChatMessage(chat_id=chat_id, user_id=current_user.id, content=message)
+
+    msg_embedding = await embed_message(message)
+    relevant_docs = get_k_similar_chunks(
+        query_embedding=msg_embedding, document_id=document_id, session=session
+    )
+
+    gpt_prompt = make_submittable_prompt(message, relevant_docs)
+    ai_response_content = await get_ai_response(chat_id, session, gpt_prompt, message)
     ai_response = ChatMessage(
         chat_id=chat_id,
         user_id=current_user.id,
-        content=response.content,
+        content=ai_response_content.content,
         originator=ChatOriginator.ai,
     )
 
