@@ -6,26 +6,11 @@ services:
     build:
       context: ./backend
       dockerfile: ./Dockerfile
-    command: ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port 80 --reload"]
+    command: ["sh", "-c", "pip install -r requirements-dev.txt && python -m uvicorn app.main:app --host 0.0.0.0 --port 80 --reload"]
     volumes:
       - ./backend:/app
-    environment:
-      # A JSON with 'username' and 'password' keys
-      PGVECTOR_CREDENTIALS: ${PGVECTOR_CREDENTIALS}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-postgres}
-      POSTGRES_SCHEMA: ${POSTGRES_SCHEMA:-public}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      COGNITO_REGION: ${COGNITO_REGION}
-      COGNITO_POOL_ID: ${COGNITO_POOL_ID}
-      COGNITO_APP_CLIENT_ID: ${COGNITO_APP_CLIENT_ID}
-      COGNITO_CLIENT_SECRET: ${COGNITO_CLIENT_SECRET}
-      COGNITO_DOMAIN: ${COGNITO_DOMAIN}
-      COGNITO_REDIRECT_URL: ${COGNITO_REDIRECT_URL}
-      DEPLOYMENT_DOMAIN: ${DEPLOYMENT_DOMAIN}
-      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
-
+    env_file:
+      - .env
     ports:
       - 80:80
 
