@@ -7,7 +7,7 @@
       <h2>Uploaded Documents</h2>
       <ul>
         <li v-for="document in documents" :key="`doc-${document.id}`">
-          <button @click="startChat(document.id)">+</button>
+          <button :id="`upload-button-${document.id}`" @click="startChat(document.id)">+</button>
           {{ document.title }}
           <ul>
             <li v-for="chat in document.chats" :key="`chat-${chat.id}`"><a
