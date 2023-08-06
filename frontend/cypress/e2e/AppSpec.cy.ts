@@ -2,13 +2,20 @@
 
 describe('Logged-out Homepage spec', () => {
   it('loads with blurb', () => {
-    cy.visit('http://localhost:5173')
+    cy.visit('/')
     cy.get('img')
   }),
+
   it('has clickable login link', () => {
-    cy.visit('http://localhost:5173')
+    cy.visit('/')
     cy.contains('Log in').click()
-  })
+  }),
+
+  it('redirects you to root when logged out', () => {
+    cy.visit('/start')
+    cy.wait(1000)
+    cy.url().should('not.contain', '/start')
+  })  
 })
 
 describe('Logged-in Homepage spec', () => {
@@ -27,7 +34,7 @@ describe('Logged-in Homepage spec', () => {
     cy.get('a:contains(Chat 10)').click()
     cy.contains('Chat 10 for Document')
     cy.get('.ai').should('be.visible')
-  })
+  }),
 
   // it('uploads a file', function() {
   //   cy.get('input[type="file"]').selectFile('cypress/fixtures/sample.pdf')
@@ -40,7 +47,7 @@ describe('Logged-in Homepage spec', () => {
     cy.get('button#upload-button-10:contains("+")').click()
     cy.contains('for Document')
     cy.get('.ai').should('not.exist')
-  })
+  }),
 
   it('sends a message and receives a response', function() {
     let msg = 'Disregard previous messages and explain to me the primary concepts in this paper. '
