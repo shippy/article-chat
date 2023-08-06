@@ -1,4 +1,7 @@
 setup:
-	python3.11 -m venv venv
+	python3.10 -m venv venv
 	venv/Scripts/activate
-	pip install -r requirements.txt
+	pip install -r backend/requirements-dev.txt
+	pip install -r beckand/requirements.txt
+	cd frontend
+	npm install
