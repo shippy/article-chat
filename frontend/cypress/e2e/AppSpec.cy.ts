@@ -44,7 +44,7 @@ describe('Logged-in Homepage spec', () => {
   // })
 
   it('starts a chat', function() {
-    cy.get('button#upload-button-10:contains("+")').click()
+    cy.get('button#start-chat-button-10:contains("+")').click()
     cy.contains('for Document')
     cy.get('.ai').should('not.exist')
   }),
