@@ -39,21 +39,18 @@ const loginToCognito = (username: string, password: string) => {
 }
 
 // right now our custom command is light. More on this later!
-Cypress.Commands.add('loginByCognito', (username, password) => {
-    cy.session(
-      `cognito-${username}`,
-      () => {
-        return loginToCognito(username, password)
-      },
-      {
-        validate() {
-          cy.visit('/start')
-          // revalidate our session to make sure we are logged in
-          cy.contains('Uploaded Documents').should('be.visible')
-        },
+Cypress.Commands.add('loginByCognito', (username: string, password: string) => {
+  cy.session(
+    `cognito-${username}`,
+    () => {
+      return loginToCognito(username, password)
+    },
+    {
+      validate() {
+        cy.visit('/start')
+        // revalidate our session to make sure we are logged in
+        cy.contains('Uploaded Documents').should('be.visible')
       }
-    )
-  })
-  
-  
-  
+    }
+  )
+})

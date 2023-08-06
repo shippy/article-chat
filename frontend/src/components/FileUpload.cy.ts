@@ -1,3 +1,4 @@
+/// <reference types="cypress" />
 import FileUpload from './FileUpload.vue'
 
 describe('<FileUpload />', () => {

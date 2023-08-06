@@ -1,3 +1,4 @@
+/// <reference types="cypress" />
 import Login from './Login.vue'
 
 describe('<Login />', () => {

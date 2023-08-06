@@ -1,3 +1,5 @@
+/// <reference types="cypress" />
+
 describe('Logged-out Homepage spec', () => {
   it('loads with blurb', () => {
     cy.visit('http://localhost:5173')
