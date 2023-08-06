@@ -20,6 +20,9 @@ import './commands'
 // require('./commands')
 
 import { mount } from 'cypress/vue'
+import { createPinia, setActivePinia } from 'pinia'
+import { createTestingPinia } from '@pinia/testing'
+
 
 // Augment the Cypress namespace to include type definitions for
 // your custom command.
