@@ -317,12 +317,16 @@ async def test_list_documents_omits_deleted_docs(
 async def test_list_documents_omits_deleted_chats(
     client: TestClient, session: Session, documents: List[Document], semi_deleted_chats: List[Chat]
 ):
+    assert semi_deleted_chats[1].deleted_at is not None
+    
     app.dependency_overrides[get_current_user] = mock_get_current_user
     response = client.get("/documents")
     app.dependency_overrides.clear()
     
     docs = response.json()
-    assert len(docs[0]["chats"]) == 1
+    doc_with_deleted_chat = [doc for doc in docs if doc["id"] == semi_deleted_chats[1].document_id]
+    assert len(doc_with_deleted_chat[0]["chats"]) == 1
+    assert doc_with_deleted_chat[0]["chats"][0]["deleted_at"] is None
     
 
 # TODO: Implement message deletion?
