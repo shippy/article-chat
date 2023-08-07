@@ -1,3 +1,4 @@
+import datetime
 from http import HTTPStatus
 from io import BytesIO
 from typing import List
@@ -109,7 +110,7 @@ async def test_list_messages_in_chat_unauthorized(
 #     assert response.status_code == HTTPStatus.OK
 #     # FIXME: Should return document instead
 #     assert isinstance(resp_json, int)
-    
+
 #     document = session.get(Document, resp_json)
 #     assert document.title == "sample.pdf"
 #     assert document.user_id == 1
@@ -128,12 +129,14 @@ async def test_upload_file_unauthorized(client: TestClient, session: Session):
     new_docs_count = len(session.exec(select(Document)).all())
     assert new_docs_count == docs_count
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    
-    
+
+
 @pytest.mark.asyncio
-async def test_create_new_chat(client: TestClient, session: Session, documents: List[Document]):
+async def test_create_new_chat(
+    client: TestClient, session: Session, documents: List[Document]
+):
     document = documents[0]  # choose the first document
-    
+
     # override get_current_user dependency
     app.dependency_overrides[get_current_user] = mock_get_current_user
     response = client.get(f"/documents/{document.id}/new_chat")
@@ -153,7 +156,9 @@ async def test_create_new_chat(client: TestClient, session: Session, documents: 
 
 
 @pytest.mark.asyncio
-async def test_create_new_chat_unauthenticated(client: TestClient, session: Session, documents: List[Document]):
+async def test_create_new_chat_unauthenticated(
+    client: TestClient, session: Session, documents: List[Document]
+):
     document = documents[0]  # choose the first document
     response = client.get(f"/documents/{document.id}/new_chat")
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -162,36 +167,181 @@ async def test_create_new_chat_unauthenticated(client: TestClient, session: Sess
 async def mock_embed_message(message):
     return [0.9] * 1536
 
+
 # Define a mock for get_ai_response function
 async def mock_get_ai_response(chat_id, session, gpt_prompt, message):
     from langchain.schema import AIMessage
+
     return AIMessage(content="Mock AI response")
+
 
 # Define a mock for the vector store retrieval function, since it can't be
 # done with SQLite
 def mock_get_similar_chunks(query_embedding, document_id, session, k=3):
-    return [
-        f"Mock similar chunk {n}"
-        for n in range(0, k)
-    ]
+    return [f"Mock similar chunk {n}" for n in range(0, k)]
+
 
 @pytest.mark.asyncio
-@patch('app.api.document_router.embed_message', new=mock_embed_message)
-@patch('app.api.document_router.get_ai_response', new=mock_get_ai_response)
-@patch('app.api.document_router.get_k_similar_chunks', new=mock_get_similar_chunks)
-@patch.dict(os.environ, {"OPENAI_API_KEY": "mock_key"})  # Check that key isn't actually being used
-async def test_send_message(client: TestClient, session: Session, chats: List[Chat], user: User):
+@patch("app.api.document_router.embed_message", new=mock_embed_message)
+@patch("app.api.document_router.get_ai_response", new=mock_get_ai_response)
+@patch("app.api.document_router.get_k_similar_chunks", new=mock_get_similar_chunks)
+@patch.dict(
+    os.environ, {"OPENAI_API_KEY": "mock_key"}
+)  # Check that key isn't actually being used
+async def test_send_message(
+    client: TestClient, session: Session, chats: List[Chat], user: User
+):
     app.dependency_overrides[get_current_user] = mock_get_current_user
 
     chat = chats[0]  # choose the first chat
     document_id = chat.document_id
     message = "Test message content"
-    response = client.post(f"/documents/{document_id}/chat/{chat.id}/message", json={"message": message})
+    response = client.post(
+        f"/documents/{document_id}/chat/{chat.id}/message", json={"message": message}
+    )
     app.dependency_overrides.clear()
 
     assert response.status_code == HTTPStatus.OK
 
     chat_message = response.json()
-    assert chat_message['content'] == "Mock AI response"
-    assert chat_message['chat_id'] == chat.id
-    assert chat_message['user_id'] == user.id
+    assert chat_message["content"] == "Mock AI response"
+    assert chat_message["chat_id"] == chat.id
+    assert chat_message["user_id"] == user.id
+
+
+# Test deletions of documents, chats, and chat messages
+@pytest.mark.asyncio
+async def test_delete_document(
+    client: TestClient, session: Session, documents: List[Document], chats: List[Chat]
+):
+    document = documents[0]
+    assert document.deleted_at is None
+
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    response = client.delete(f"/documents/{document.id}")
+    app.dependency_overrides.clear()
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    updated_document = session.get(Document, document.id)
+    assert updated_document.deleted_at is not None
+
+    # document_chats = session.exec(
+    #     select(Chat).where(Chat.document_id == document.id)
+    # ).all()
+    # assert len(document_chats) > 0
+    # for chat in document_chats:
+    #     assert chat.deleted_at is not None
+    #     chat_messages = session.exec(
+    #         select(ChatMessage).where(ChatMessage.chat_id == chat.id)
+    #     ).all()
+    #     assert len(chat_messages) > 0
+    #     for chat_message in chat_messages:
+    #         assert chat_message.deleted_at is not None
+
+
+@pytest.mark.asyncio
+async def test_cannot_delete_other_user_document(
+    client: TestClient, session: Session, documents: List[Document]
+):
+    document = documents[0]
+    assert document.deleted_at is None
+
+    app.dependency_overrides[get_current_user] = mock_get_another_user
+    response = client.delete(f"/documents/{document.id}")
+    app.dependency_overrides.clear()
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+    updated_document = session.get(Document, document.id)
+    assert updated_document.deleted_at is None
+
+    # TODO: Test that all inheriting chats and chat messages are not deleted either?
+
+
+@pytest.mark.asyncio
+async def test_delete_chat(client: TestClient, session: Session, chats: List[Chat]):
+    chat = chats[0]
+    assert chat.deleted_at is None
+
+    # TODO: Retrieve chat messages and test that they're not deleted either
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    response = client.delete(f"/documents/{chat.document_id}/chat/{chat.id}")
+    app.dependency_overrides.clear()
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    updated_chat = session.get(Chat, chat.id)
+    assert updated_chat.deleted_at is not None
+
+    # # TODO: All chat messages should also be marked deleted
+    # chat_messages = session.exec(select(ChatMessage).where(ChatMessage.chat_id == chat.id)).all()
+    # assert len(chat_messages) > 0
+    # for chat_message in chat_messages:
+    #     assert chat_message.deleted_at is not None
+
+
+@pytest.mark.asyncio
+async def test_cannot_delete_other_user_chat(
+    client: TestClient, session: Session, chats: List[Chat]
+):
+    chat = chats[0]
+    assert chat.deleted_at is None
+
+    app.dependency_overrides[get_current_user] = mock_get_another_user
+    response = client.delete(f"/documents/{chat.document_id}/chat/{chat.id}")
+    app.dependency_overrides.clear()
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+    updated_chat = session.get(Chat, chat.id)
+    assert updated_chat.deleted_at is None
+
+
+# TODO: Test document and chat retrieval to see if they're including deleted documents and chats/chat messages
+@pytest.mark.asyncio
+async def test_list_documents_omits_deleted_docs(
+    client: TestClient, session: Session, semi_deleted_documents: List[Document]
+):
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    response = client.get("/documents")
+    app.dependency_overrides.clear()
+
+    assert response.status_code == HTTPStatus.OK
+
+    document_list = response.json()
+    assert len(document_list) == 1
+    
+    
+@pytest.mark.asyncio
+async def test_list_documents_omits_deleted_chats(
+    client: TestClient, session: Session, documents: List[Document], semi_deleted_chats: List[Chat]
+):
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    response = client.get("/documents")
+    app.dependency_overrides.clear()
+    
+    docs = response.json()
+    assert len(docs[0]["chats"]) == 1
+    
+
+# TODO: Implement message deletion?
+# @pytest.mark.asyncio
+# def test_delete_message(
+#     client: TestClient, session: Session, chats: List[Chat]
+# ):
+#     chat = chats[0]
+#     messages = session.exec(select(ChatMessage).where(ChatMessage.chat_id == chat.id)).all()
+#     message = messages[0]
+#     assert message.deleted_at is None
+
+#     app.dependency_overrides[get_current_user] = mock_get_current_user
+#     response = client.delete(
+#         f"/documents/{chat.document_id}/chat/{chat.id}/message/{message.id}"
+#     )
+#     app.dependency_overrides.clear()
+
+#     assert response.status_code == HTTPStatus.NO_CONTENT
+
+#     updated_message = session.get(ChatMessage, message.id)
+#     assert updated_message.deleted_at is not None
