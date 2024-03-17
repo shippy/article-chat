@@ -43,23 +43,23 @@ data "aws_iam_policy_document" "gh_action_policy_doc" {
     ]
   }
 
-  statement {
-    effect = "Allow"
+  # statement {
+  #   effect = "Allow"
 
-    actions = [
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:BatchGetImage",
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:PutImage",
-      "ecr:InitiateLayerUpload",
-      "ecr:UploadLayerPart",
-      "ecr:CompleteLayerUpload",
-    ]
+  #   actions = [
+  #     "ecr:GetDownloadUrlForLayer",
+  #     "ecr:BatchGetImage",
+  #     "ecr:BatchCheckLayerAvailability",
+  #     "ecr:PutImage",
+  #     "ecr:InitiateLayerUpload",
+  #     "ecr:UploadLayerPart",
+  #     "ecr:CompleteLayerUpload",
+  #   ]
 
-    resources = [
-      "${aws_ecr_repository.main.arn}"
-    ]
-  }
+  #   resources = [
+  #     "${aws_ecr_repository.main.arn}"
+  #   ]
+  # }
 
   statement {
     effect = "Allow"
@@ -69,17 +69,17 @@ data "aws_iam_policy_document" "gh_action_policy_doc" {
     resources = ["*"]
   }
 
-  # Allow forcing new deployment
-  statement {
-    sid = "ForceNewDeployment"
-    effect = "Allow"
-    actions = [
-      "ecs:UpdateService",
-    ]
-    resources = [
-      "${module.ecs_alb_service_task.service_arn}"
-    ]
-  }
+  # # Allow forcing new deployment
+  # statement {
+  #   sid = "ForceNewDeployment"
+  #   effect = "Allow"
+  #   actions = [
+  #     "ecs:UpdateService",
+  #   ]
+  #   resources = [
+  #     "${module.ecs_alb_service_task.service_arn}"
+  #   ]
+  # }
 
 
   # Reload ALB
