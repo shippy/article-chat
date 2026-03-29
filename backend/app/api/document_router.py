@@ -1,3 +1,4 @@
+import datetime
 from fastapi import (
     APIRouter,
     Body,
@@ -9,11 +10,13 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import JSONResponse, RedirectResponse
+from http import HTTPStatus
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.document_loaders import UnstructuredPDFLoader
 from langchain.text_splitter import CharacterTextSplitter
 import os
 
+from sqlalchemy.sql.operators import is_
 from sqlmodel import Session, col, select
 import tempfile
 from typing import Annotated, Optional, Sequence, Union
@@ -109,14 +112,42 @@ async def upload_and_process_file(
 async def list_documents(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
-) -> Sequence[Document]:
+) -> Sequence[DocumentWithChats]:
     query = (
         select(Document)
-        .where(Document.user_id == current_user.id)
+        .where(Document.user_id == current_user.id, is_(Document.deleted_at, None))
         .order_by(col(Document.created_at).desc())
     )
     documents = list(session.exec(query))
-    return documents
+
+    # Create a new list with filtered chats
+    docs_with_filtered_chats = [
+        DocumentWithChats(
+            **doc.dict(), chats=[chat for chat in doc.chats if chat.deleted_at is None]
+        )
+        for doc in documents
+    ]
+
+    return docs_with_filtered_chats
+
+
+# Delete uploaded document (set a deleted_at column to current timestamp)
+@document_router.delete("/{document_id}")
+async def delete_document(
+    document_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    query = select(Document).where(
+        Document.user_id == current_user.id, Document.id == document_id
+    )
+    document = session.exec(query).first()
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    document.deleted_at = datetime.datetime.utcnow()
+    session.add(document)
+    session.commit()
+    return Response(status_code=HTTPStatus.NO_CONTENT)
 
 
 @document_router.get("/{document_id}/new_chat")
@@ -126,12 +157,43 @@ async def create_new_chat(
     current_user: User = Depends(get_current_user),
 ) -> int:
     # TODO: Check that the document belongs to the user
+    document = session.get(Document, document_id)
+    if document.user_id != current_user.id:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED, detail="Access not permitted"
+        )
     new_chat = Chat(document_id=document_id)
     session.add(new_chat)
     session.commit()
     session.refresh(new_chat)
 
     return new_chat.id  # type: ignore
+
+
+@document_router.delete("/{document_id}/chat/{chat_id}")
+async def delete_chat(
+    document_id: int,
+    chat_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    query = (
+        select(Chat)
+        .join(Document)
+        .where(
+            Chat.id == chat_id,
+            Chat.document_id == document_id,
+            is_(Chat.deleted_at, None),
+            Document.user_id == current_user.id,
+        )
+    )
+    chat = session.exec(query).first()
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    chat.deleted_at = datetime.datetime.utcnow()
+    session.add(chat)
+    session.commit()
+    return Response(status_code=HTTPStatus.NO_CONTENT)
 
 
 @document_router.get("/{document_id}/chat/{chat_id}")
@@ -142,7 +204,9 @@ async def retrieve_chat(
     current_user: User = Depends(get_current_user),
 ) -> Sequence[ChatMessage]:
     query = select(ChatMessage).where(
-        ChatMessage.chat_id == chat_id, ChatMessage.user_id == current_user.id
+        ChatMessage.chat_id == chat_id,
+        ChatMessage.user_id == current_user.id,
+        is_(ChatMessage.deleted_at, None),
     )
     chat_messages = session.exec(query)
     return list(chat_messages)
@@ -157,7 +221,10 @@ def get_k_similar_chunks(
 ) -> Sequence[str]:
     query = (
         select(VectorEmbedding.content)
-        .where(VectorEmbedding.document_id == document_id)
+        .where(
+            VectorEmbedding.document_id == document_id,
+            # is_(VectorEmbedding.deleted_at, None),
+        )
         .order_by(VectorEmbedding.embedding.l2_distance(query_embedding))  # type: ignore
         .limit(k)
     )
@@ -201,7 +268,7 @@ async def get_ai_response(
     chat = ChatOpenAI(model=model, temperature=temperature)  # type: ignore
     previous_messages_query = (
         select(ChatMessage)
-        .where(ChatMessage.chat_id == chat_id)
+        .where(ChatMessage.chat_id == chat_id, is_(ChatMessage.deleted_at, None))
         .order_by(col(ChatMessage.created_at).desc())
         .limit(2)
     )

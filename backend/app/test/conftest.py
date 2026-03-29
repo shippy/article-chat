@@ -1,5 +1,6 @@
 # Setup per https://sqlmodel.tiangolo.com/tutorial/fastapi/tests/
 
+import datetime
 from fastapi.testclient import TestClient
 import pytest
 import pytest_asyncio
@@ -72,6 +73,21 @@ async def documents(session: Session, user: User) -> List[Document]:
 
 
 @pytest_asyncio.fixture
+async def semi_deleted_documents(session: Session, user: User) -> List[Document]:
+    documents = [
+        Document(title="Document 1", user_id=user.id),
+        Document(title="Document 2", user_id=user.id, deleted_at=datetime.datetime.now()),
+    ]
+    
+    session.add_all(documents)
+    session.commit()
+    for document in documents:
+        session.refresh(document)
+        
+    return documents
+
+
+@pytest_asyncio.fixture
 async def chats(session: Session, documents: List[Document]) -> List[Chat]:
     chats = [
         Chat(document_id=documents[0].id, title="Chat 1"),
@@ -92,4 +108,19 @@ async def chats(session: Session, documents: List[Document]) -> List[Chat]:
     session.add_all(messages)
     session.commit()
 
+    return chats
+
+
+@pytest_asyncio.fixture
+async def semi_deleted_chats(session: Session, documents: List[Document]) -> List[Chat]:
+    chats = [
+        Chat(document_id=documents[0].id, title="Chat 1"),
+        Chat(document_id=documents[0].id, title="Chat 2", deleted_at=datetime.datetime.now())
+    ]
+    
+    session.add_all(chats)
+    session.commit()
+    for chat in chats:
+        session.refresh(chat)
+        
     return chats

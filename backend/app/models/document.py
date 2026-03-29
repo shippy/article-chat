@@ -31,6 +31,7 @@ class VectorEmbedding(SQLModel, table=True):
     content: str = Field(...)
 
     created_at: datetime = Field(default_factory=datetime.now)
+    # deleted_at: datetime = Field(default=None)
 
 
 class ChatOriginator(str, Enum):
@@ -42,6 +43,8 @@ class Chat(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     document_id: int = Field(..., foreign_key="document.id")
     document: Document = Relationship(back_populates="chats")
+    created_at: datetime = Field(default_factory=datetime.now)
+    deleted_at: Optional[datetime] = Field(default=None)
 
 
 class ChatMessage(SQLModel, table=True):
